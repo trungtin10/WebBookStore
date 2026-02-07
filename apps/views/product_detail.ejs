@@ -5,8 +5,26 @@
     <title><%= product.name %> - Bookstore</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Link CSS riêng -->
     <link rel="stylesheet" href="/css/product-detail.css">
+    <style>
+        /* Bổ sung style cho bảng thông số */
+        .spec-table { width: 100%; font-size: 0.95rem; margin-bottom: 20px; }
+        .spec-table td { padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .spec-label { color: #777; width: 40%; font-weight: 500; }
+        .spec-value { color: #333; font-weight: 600; }
+
+        .product-price-box {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .main-price { font-size: 2.5rem; color: #C92127; font-weight: 800; }
+
+        .stock-status { font-size: 0.9rem; margin-bottom: 10px; }
+        .in-stock { color: #2ecc71; font-weight: 600; }
+        .out-stock { color: #e74c3c; font-weight: 600; }
+    </style>
 </head>
 <body>
     <%- include('partials/menu') %>
@@ -32,213 +50,246 @@
         </div>
     </div>
 
-    <div class="container mt-3">
+    <div class="container mt-4 mb-5">
         <!-- Breadcrumb -->
-        <div class="breadcrumb shadow-sm">
-            <a href="/">Trang chủ</a> <span class="mx-2">/</span>
-            <a href="#"><%= product.category_name || 'Sách' %></a> <span class="mx-2">/</span>
-            <span class="text-muted"><%= product.name %></span>
-        </div>
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb bg-white p-3 rounded shadow-sm">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item"><a href="#"><%= product.category_name || 'Sách' %></a></li>
+                <li class="breadcrumb-item active" aria-current="page"><%= product.name %></li>
+            </ol>
+        </nav>
 
         <!-- Product Info -->
-        <div class="product-container">
-            <div class="row">
+        <div class="product-container bg-white p-4 rounded shadow-sm">
+            <div class="row g-5">
+                <!-- Ảnh sản phẩm -->
                 <div class="col-md-5 text-center">
-                    <%
-                        let imgSrc = product.image_url;
-                        if (imgSrc && !imgSrc.startsWith('http')) {
-                            imgSrc = '/images/' + imgSrc;
-                        }
-                    %>
-                    <img src="<%= imgSrc || '/images/default.jpg' %>"
-                         class="product-img"
-                         alt="<%= product.name %>"
-                         onerror="this.src='https://picsum.photos/400/600'">
+                    <div class="p-3 border rounded">
+                        <%
+                            let imgSrc = product.image_url;
+                            if (imgSrc && !imgSrc.startsWith('http')) {
+                                imgSrc = '/images/' + imgSrc;
+                            }
+                        %>
+                        <img src="<%= imgSrc || '/images/default.jpg' %>"
+                             class="product-img img-fluid"
+                             alt="<%= product.name %>"
+                             onerror="this.src='https://picsum.photos/400/600'">
+                    </div>
                 </div>
 
+                <!-- Thông tin chi tiết -->
                 <div class="col-md-7">
-                    <h1 class="product-title"><%= product.name %></h1>
-                    <p class="product-author">
-                        Tác giả: <strong class="text-dark"><%= product.author %></strong>
-                        <span class="mx-3">|</span>
-                        Tình trạng: <span class="text-success fw-bold"><%= product.quantity > 0 ? 'Còn hàng' : 'Hết hàng' %></span>
-                    </p>
+                    <h1 class="product-title mb-2"><%= product.name %></h1>
 
-                    <div class="price-box">
-                        <span class="current-price"><%= Number(product.price).toLocaleString('vi-VN') %> đ</span>
-                    </div>
-
-                    <!-- Form thêm vào giỏ hàng (Dùng AJAX) -->
-                    <div class="mb-4">
-                        <label class="fw-bold mb-2">Số lượng:</label>
-                        <div class="input-group" style="width: 140px;">
-                            <button class="btn btn-outline-secondary" type="button" onclick="decreaseQty()">-</button>
-                            <input type="text" class="form-control text-center" value="1" id="qtyInput">
-                            <button class="btn btn-outline-secondary" type="button" onclick="increaseQty()">+</button>
+                    <div class="row mb-3 text-muted small">
+                        <div class="col-6">
+                            Nhà cung cấp: <a href="#" class="text-decoration-none fw-bold"><%= product.publisher_name || 'Đang cập nhật' %></a>
+                        </div>
+                        <div class="col-6">
+                            Tác giả: <a href="#" class="text-decoration-none fw-bold"><%= product.author_name || 'Đang cập nhật' %></a>
                         </div>
                     </div>
 
-                    <div class="d-flex">
-                        <button class="btn btn-add-cart" onclick="addToCart(<%= product.id %>)">
+                    <div class="product-price-box">
+                        <span class="main-price"><%= Number(product.price).toLocaleString('vi-VN') %> đ</span>
+                    </div>
+
+                    <div class="stock-status">
+                        Tình trạng:
+                        <% if (product.quantity > 0) { %>
+                            <span class="in-stock"><i class="fas fa-check-circle me-1"></i> Còn hàng</span>
+                        <% } else { %>
+                            <span class="out-stock"><i class="fas fa-times-circle me-1"></i> Hết hàng</span>
+                        <% } %>
+                    </div>
+
+                    <!-- Form thêm vào giỏ -->
+                    <div class="d-flex align-items-center gap-3 mt-4 mb-4">
+                        <div class="input-group" style="width: 140px;">
+                            <button class="btn btn-outline-secondary" type="button" onclick="decreaseQty()">-</button>
+                            <input type="text" class="form-control text-center fw-bold" value="1" id="qtyInput">
+                            <button class="btn btn-outline-secondary" type="button" onclick="increaseQty()">+</button>
+                        </div>
+
+                        <!-- Sửa lại: Dùng data-id thay vì onclick inline -->
+                        <button class="btn btn-add-cart flex-grow-1 py-2" id="btnAddToCart" data-id="<%= product.id %>">
                             <i class="fas fa-cart-plus me-2"></i> Thêm vào giỏ hàng
                         </button>
-                        <button class="btn btn-buy-now" onclick="buyNow(<%= product.id %>)">
+                        <button class="btn btn-buy-now flex-grow-1 py-2" id="btnBuyNow" data-id="<%= product.id %>">
                             Mua ngay
                         </button>
+                    </div>
+
+                    <!-- Thông tin chi tiết (Bảng) -->
+                    <div class="mt-4">
+                        <h5 class="fw-bold border-bottom pb-2 mb-3">Thông tin chi tiết</h5>
+                        <table class="spec-table">
+                            <tr>
+                                <td class="spec-label">Mã hàng</td>
+                                <td class="spec-value"><%= product.id %></td>
+                            </tr>
+                            <tr>
+                                <td class="spec-label">Tên Nhà Cung Cấp</td>
+                                <td class="spec-value"><%= product.publisher_name || '---' %></td>
+                            </tr>
+                            <tr>
+                                <td class="spec-label">Tác giả</td>
+                                <td class="spec-value"><%= product.author_name || '---' %></td>
+                            </tr>
+                            <tr>
+                                <td class="spec-label">Năm XB</td>
+                                <td class="spec-value"><%= product.publication_year || '---' %></td>
+                            </tr>
+                            <tr>
+                                <td class="spec-label">Số trang</td>
+                                <td class="spec-value"><%= product.pages || '---' %></td>
+                            </tr>
+                            <tr>
+                                <td class="spec-label">Hình thức</td>
+                                <td class="spec-value"><%= product.cover_type || '---' %></td>
+                            </tr>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Tabs: Mô tả & Đánh giá -->
-        <div class="bg-white rounded-top-3 shadow-sm mt-4">
-            <ul class="nav nav-tabs" id="productTab" role="tablist">
+        <div class="bg-white rounded shadow-sm mt-4 p-4">
+            <ul class="nav nav-tabs mb-4" id="productTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc" type="button" role="tab">Mô tả sản phẩm</button>
+                    <button class="nav-link active fw-bold" id="desc-tab" data-bs-toggle="tab" data-bs-target="#desc" type="button" role="tab">Mô tả sản phẩm</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button" role="tab">Đánh giá khách hàng</button>
+                    <button class="nav-link fw-bold" id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button" role="tab">Đánh giá khách hàng</button>
                 </li>
             </ul>
-        </div>
 
-        <div class="tab-content mb-5" id="productTabContent">
-            <!-- Tab Mô tả -->
-            <div class="tab-pane fade show active" id="desc" role="tabpanel">
-                <div class="text-muted" style="line-height: 1.8;">
-                    <p><%= product.description || "Đang cập nhật nội dung..." %></p>
+            <div class="tab-content" id="productTabContent">
+                <!-- Tab Mô tả -->
+                <div class="tab-pane fade show active" id="desc" role="tabpanel">
+                    <div class="text-secondary" style="line-height: 1.8; text-align: justify;">
+                        <%= product.description || "Đang cập nhật nội dung..." %>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Tab Đánh giá -->
-            <div class="tab-pane fade" id="review" role="tabpanel">
+                <!-- Tab Đánh giá -->
+                <div class="tab-pane fade" id="review" role="tabpanel">
 
-                <!-- Tổng quan đánh giá -->
-                <div class="rating-overview">
-                    <div class="text-center">
-                        <%
-                            let avgRating = 0;
-                            if (reviews && reviews.length > 0) {
-                                let total = reviews.reduce((sum, r) => sum + r.rating, 0);
-                                avgRating = (total / reviews.length).toFixed(1);
-                            }
-                        %>
-                        <div class="rating-score"><%= avgRating %>/5</div>
-                        <div class="rating-stars">
-                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                    <!-- Tổng quan đánh giá -->
+                    <div class="rating-overview border-bottom pb-4 mb-4">
+                        <div class="text-center">
+                            <%
+                                let avgRating = 0;
+                                if (reviews && reviews.length > 0) {
+                                    let total = reviews.reduce((sum, r) => sum + r.rating, 0);
+                                    avgRating = (total / reviews.length).toFixed(1);
+                                }
+                            %>
+                            <div class="rating-score display-4 fw-bold text-warning"><%= avgRating %>/5</div>
+                            <div class="rating-stars text-warning mb-2">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                            </div>
+                            <div class="text-muted small">(<%= reviews ? reviews.length : 0 %> đánh giá)</div>
                         </div>
-                        <div class="text-muted small mt-1">(<%= reviews ? reviews.length : 0 %> đánh giá)</div>
-                    </div>
-                    <div class="flex-grow-1" style="max-width: 400px;">
-                        <div class="rating-row">
-                            <span>5 sao</span>
-                            <div class="progress"><div class="progress-bar" style="width: <%= reviews.length > 0 ? (reviews.filter(r => r.rating == 5).length / reviews.length * 100) : 0 %>%"></div></div>
-                            <span><%= reviews.filter(r => r.rating == 5).length %></span>
-                        </div>
-                        <div class="rating-row">
-                            <span>4 sao</span>
-                            <div class="progress"><div class="progress-bar" style="width: <%= reviews.length > 0 ? (reviews.filter(r => r.rating == 4).length / reviews.length * 100) : 0 %>%"></div></div>
-                            <span><%= reviews.filter(r => r.rating == 4).length %></span>
-                        </div>
-                        <div class="rating-row">
-                            <span>3 sao</span>
-                            <div class="progress"><div class="progress-bar" style="width: 5%"></div></div>
-                            <span>5%</span>
-                        </div>
-                    </div>
 
-                    <div class="ms-auto text-end">
-                        <% if (locals.session && locals.session.user) { %>
-                            <% if (canReview) { %>
-                                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#reviewForm">
-                                    <i class="fas fa-pen me-2"></i> Viết đánh giá
-                                </button>
+                        <div class="ms-auto text-end">
+                            <% if (locals.session && locals.session.user) { %>
+                                <% if (canReview) { %>
+                                    <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#reviewForm">
+                                        <i class="fas fa-pen me-2"></i> Viết đánh giá
+                                    </button>
+                                <% } else { %>
+                                    <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.9rem;">
+                                        <i class="fas fa-shopping-bag me-2"></i> Bạn cần mua sản phẩm này để đánh giá.
+                                    </div>
+                                <% } %>
                             <% } else { %>
-                                <div class="alert alert-warning py-2 px-3 mb-0" style="font-size: 0.9rem;">
-                                    <i class="fas fa-shopping-bag me-2"></i> Bạn cần mua sản phẩm này để đánh giá.
-                                </div>
+                                <p class="mb-2 text-muted small">Đăng nhập để gửi đánh giá của bạn</p>
+                                <button class="btn btn-outline-danger fw-bold" data-bs-toggle="modal" data-bs-target="#loginModal">
+                                    <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập ngay
+                                </button>
                             <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Form đánh giá -->
+                    <div class="collapse mt-4" id="reviewForm">
+                        <div class="card card-body bg-light border-0 mb-4">
+                            <h5 class="mb-3">Gửi đánh giá của bạn</h5>
+                            <form action="/product/<%= product.id %>/review" method="POST">
+                                <div class="mb-3 d-flex align-items-center">
+                                    <label class="fw-bold me-3">Chọn mức độ hài lòng:</label>
+                                    <div class="rating-input">
+                                        <input type="radio" id="star5" name="rating" value="5" checked><label for="star5" title="Tuyệt vời">★</label>
+                                        <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="Hài lòng">★</label>
+                                        <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="Bình thường">★</label>
+                                        <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="Tệ">★</label>
+                                        <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="Rất tệ">★</label>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <textarea name="comment" class="form-control" rows="3" placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này..." required></textarea>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-success px-4">Gửi đánh giá</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách đánh giá -->
+                    <div class="review-list">
+                        <% if (reviews && reviews.length > 0) { %>
+                            <% reviews.forEach(review => { %>
+                                <div class="review-item d-flex gap-3 mb-3 border-bottom pb-3">
+                                    <div class="user-avatar bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; font-weight: bold;">
+                                        <%= review.full_name ? review.full_name.charAt(0).toUpperCase() : 'U' %>
+                                    </div>
+                                    <div class="review-content flex-grow-1">
+                                        <div class="d-flex justify-content-between">
+                                            <div class="review-name fw-bold"><%= review.full_name || 'Người dùng ẩn danh' %></div>
+                                            <div class="review-date text-muted small"><%= new Date(review.created_at).toLocaleDateString('vi-VN') %></div>
+                                        </div>
+                                        <div class="review-stars text-warning small mb-1">
+                                            <% for(let i=0; i<review.rating; i++) { %>★<% } %>
+                                            <% for(let i=review.rating; i<5; i++) { %>☆<% } %>
+                                        </div>
+                                        <p class="mb-0 text-secondary"><%= review.comment %></p>
+                                    </div>
+                                </div>
+                            <% }); %>
                         <% } else { %>
-                            <p class="mb-2 text-muted small">Đăng nhập để gửi đánh giá của bạn</p>
-                            <button class="btn btn-outline-danger fw-bold" data-bs-toggle="modal" data-bs-target="#loginModal">
-                                <i class="fas fa-sign-in-alt me-2"></i> Đăng nhập ngay
-                            </button>
+                            <div class="text-center py-5">
+                                <img src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" width="60" class="opacity-25 mb-3">
+                                <p class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
+                            </div>
                         <% } %>
                     </div>
-                </div>
-
-                <!-- Form đánh giá -->
-                <div class="collapse mt-4" id="reviewForm">
-                    <div class="card card-body bg-light border-0">
-                        <h5 class="mb-3">Gửi đánh giá của bạn</h5>
-                        <form action="/product/<%= product.id %>/review" method="POST">
-                            <div class="mb-3 d-flex align-items-center">
-                                <label class="fw-bold me-3">Chọn mức độ hài lòng:</label>
-                                <div class="rating-input">
-                                    <input type="radio" id="star5" name="rating" value="5" checked><label for="star5" title="Tuyệt vời">★</label>
-                                    <input type="radio" id="star4" name="rating" value="4"><label for="star4" title="Hài lòng">★</label>
-                                    <input type="radio" id="star3" name="rating" value="3"><label for="star3" title="Bình thường">★</label>
-                                    <input type="radio" id="star2" name="rating" value="2"><label for="star2" title="Tệ">★</label>
-                                    <input type="radio" id="star1" name="rating" value="1"><label for="star1" title="Rất tệ">★</label>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <textarea name="comment" class="form-control" rows="3" placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này..." required></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-success px-4">Gửi đánh giá</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Danh sách đánh giá -->
-                <div class="review-list mt-4">
-                    <% if (reviews && reviews.length > 0) { %>
-                        <% reviews.forEach(review => { %>
-                            <div class="review-item">
-                                <div class="user-avatar">
-                                    <%= review.full_name ? review.full_name.charAt(0).toUpperCase() : 'U' %>
-                                </div>
-                                <div class="review-content">
-                                    <div class="review-name"><%= review.full_name || 'Người dùng ẩn danh' %></div>
-                                    <div class="review-stars">
-                                        <% for(let i=0; i<review.rating; i++) { %>★<% } %>
-                                        <% for(let i=review.rating; i<5; i++) { %>☆<% } %>
-                                    </div>
-                                    <div class="review-date"><%= new Date(review.created_at).toLocaleDateString('vi-VN') %></div>
-                                    <p class="mt-2 mb-0 text-secondary"><%= review.comment %></p>
-                                </div>
-                            </div>
-                        <% }); %>
-                    <% } else { %>
-                        <div class="text-center py-5">
-                            <img src="https://cdn-icons-png.flaticon.com/512/4076/4076432.png" width="60" class="opacity-25 mb-3">
-                            <p class="text-muted">Chưa có đánh giá nào cho sản phẩm này.</p>
-                        </div>
-                    <% } %>
                 </div>
             </div>
         </div>
 
         <!-- Related Products -->
         <div class="mt-5 mb-5">
-            <h3 class="section-header">Sản phẩm liên quan</h3>
+            <h4 class="fw-bold mb-4">Sản phẩm liên quan</h4>
             <div class="row row-cols-2 row-cols-md-5 g-4">
                 <% if (locals.relatedProducts) { %>
                     <% relatedProducts.slice(0, 5).forEach(item => { %>
                         <% if (item.id !== product.id) { %>
                             <div class="col">
-                                <a href="/product/<%= item.id %>" class="text-decoration-none">
-                                    <div class="card related-card h-100">
+                                <a href="/product/<%= item.id %>" class="text-decoration-none text-dark">
+                                    <div class="card related-card h-100 border-0 shadow-sm">
                                         <%
                                             let rImg = item.image_url;
                                             if (rImg && !rImg.startsWith('http')) rImg = '/images/' + rImg;
                                         %>
-                                        <img src="<%= rImg || '/images/default.jpg' %>" class="related-img card-img-top" onerror="this.src='https://picsum.photos/200/300'">
+                                        <img src="<%= rImg || '/images/default.jpg' %>" class="related-img card-img-top p-2" onerror="this.src='https://picsum.photos/200/300'">
                                         <div class="card-body p-2">
-                                            <div class="related-title text-truncate"><%= item.name %></div>
-                                            <div class="related-price mt-1"><%= Number(item.price).toLocaleString('vi-VN') %> đ</div>
+                                            <div class="related-title text-truncate fw-bold" style="font-size: 0.9rem;"><%= item.name %></div>
+                                            <div class="related-price mt-1 text-danger fw-bold"><%= Number(item.price).toLocaleString('vi-VN') %> đ</div>
                                         </div>
                                     </div>
                                 </a>
@@ -260,5 +311,27 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Link JS riêng -->
     <script src="/js/product-detail.js"></script>
+
+    <!-- Script xử lý sự kiện click -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const btnAddToCart = document.getElementById('btnAddToCart');
+            const btnBuyNow = document.getElementById('btnBuyNow');
+
+            if (btnAddToCart) {
+                btnAddToCart.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    addToCart(id);
+                });
+            }
+
+            if (btnBuyNow) {
+                btnBuyNow.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    buyNow(id);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

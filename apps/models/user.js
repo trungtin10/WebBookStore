@@ -1,7 +1,6 @@
 const db = require('../../db');
 const bcrypt = require('bcrypt');
 
-// Tách hàm ra để dùng chung
 const getUserByUsername = async (username) => {
     try {
         const [rows] = await db.query("SELECT * FROM users WHERE username = ?", [username]);
@@ -21,7 +20,7 @@ const User = {
         }
     },
 
-    getUserByUsername: getUserByUsername, // Gán hàm vào export
+    getUserByUsername: getUserByUsername,
 
     getUserById: async (id) => {
         try {
@@ -76,7 +75,6 @@ const User = {
 
     login: async (username, password) => {
         try {
-            // Sửa: Gọi hàm getUserByUsername đã tách ra
             const user = await getUserByUsername(username);
             if (user) {
                 const auth = await bcrypt.compare(password, user.password);

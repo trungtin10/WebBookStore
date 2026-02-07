@@ -150,7 +150,6 @@ router.post('/checkout', (req, res) => {
     const checkoutItems = cart.filter(item => selectedIds.includes(item.id.toString()));
     const totalAmount = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    // Logic giảm giá đã được đơn giản hóa
     const productDiscount = parseFloat(req.body.product_discount) || 0;
     const shippingFee = totalAmount > 500000 ? 0 : 30000;
 
@@ -180,15 +179,31 @@ router.post('/order', async (req, res) => {
         return res.redirect('/cart');
     }
 
-    const { full_name, phone, email, address, note } = req.body;
+    const { full_name, phone, email, address, note, payment_method, shipping_discount_code } = req.body;
     const userId = res.locals.user ? res.locals.user.id : null;
 
-    const totalAmount = checkoutData.totalAmount - checkoutData.productDiscount;
+    const totalAmount = checkoutData.totalAmount;
+    const shippingFee = checkoutData.shippingFee;
+    const productDiscount = checkoutData.productDiscount;
+    let shippingDiscount = 0;
 
     try {
+        if (shipping_discount_code) {
+            const coupon = await Coupon.getCouponByCode(shipping_discount_code);
+            if (coupon && coupon.type === 'shipping' && totalAmount >= coupon.min_order_value) {
+                shippingDiscount = coupon.discount_value;
+                if (shippingDiscount > shippingFee) shippingDiscount = shippingFee;
+            }
+        }
+
+        const finalTotal = totalAmount + shippingFee - productDiscount - shippingDiscount;
+
         const orderId = await Order.createOrder({
             user_id: userId,
             total_money: totalAmount,
+            shipping_fee: shippingFee,
+            discount_amount: productDiscount + shippingDiscount,
+            final_total: finalTotal,
             shipping_address: `${full_name}, ${phone}, ${address} (${note})`,
             status: 'PENDING'
         });
@@ -209,7 +224,7 @@ router.post('/order', async (req, res) => {
             <div style="text-align:center; padding: 50px;">
                 <h2 style="color: green;">Đặt hàng thành công!</h2>
                 <p>Mã đơn hàng: #${orderId}</p>
-                <p>Tổng thanh toán: ${totalAmount.toLocaleString('vi-VN')} đ</p>
+                <p>Tổng thanh toán: ${finalTotal.toLocaleString('vi-VN')} đ</p>
                 <a href="/">Về trang chủ</a>
             </div>
         `);

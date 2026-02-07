@@ -1,15 +1,14 @@
 const db = require('../../db'); 
 
 module.exports = {
-    // Sửa lại query để JOIN qua bảng nối product_categories
     getAllProducts: async () => {
         const query = `
             SELECT
                 p.*,
-                GROUP_CONCAT(c.name SEPARATOR ', ') as category_name
+                GROUP_CONCAT(DISTINCT a.name SEPARATOR ', ') as author_name
             FROM products p
-            LEFT JOIN product_categories pc ON p.id = pc.product_id
-            LEFT JOIN categories c ON pc.category_id = c.id
+            LEFT JOIN product_authors pa ON p.id = pa.product_id
+            LEFT JOIN authors a ON pa.author_id = a.id
             GROUP BY p.id
             ORDER BY p.id DESC
         `;
@@ -17,14 +16,19 @@ module.exports = {
         return rows;
     },
 
-    // Sửa lại query để JOIN đúng
+    // Sửa lại hàm này để lấy đầy đủ thông tin cho trang Edit và Detail
     getProductById: async (id) => {
         const query = `
             SELECT
                 p.*,
                 pub.name as publisher_name,
                 GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name,
-                GROUP_CONCAT(DISTINCT a.name SEPARATOR ', ') as author_name
+                GROUP_CONCAT(DISTINCT a.name SEPARATOR ', ') as author_name,
+
+                -- Lấy ID để binding vào form edit (Lấy giá trị đầu tiên tìm thấy)
+                (SELECT category_id FROM product_categories WHERE product_id = p.id LIMIT 1) as category_id,
+                (SELECT author_id FROM product_authors WHERE product_id = p.id LIMIT 1) as author_id
+
             FROM products p
             LEFT JOIN publishers pub ON p.publisher_id = pub.id
             LEFT JOIN product_categories pc ON p.id = pc.product_id
@@ -38,15 +42,12 @@ module.exports = {
         return rows[0]; 
     },
 
-    // Sửa lại query tìm kiếm
     searchProducts: async (keyword) => {
         const query = `
             SELECT
                 p.*,
-                GROUP_CONCAT(DISTINCT c.name SEPARATOR ', ') as category_name
+                GROUP_CONCAT(DISTINCT a.name SEPARATOR ', ') as author_name
             FROM products p
-            LEFT JOIN product_categories pc ON p.id = pc.product_id
-            LEFT JOIN categories c ON pc.category_id = c.id
             LEFT JOIN product_authors pa ON p.id = pa.product_id
             LEFT JOIN authors a ON pa.author_id = a.id
             WHERE p.name LIKE ? OR a.name LIKE ?
@@ -110,7 +111,16 @@ module.exports = {
         return rows;
     },
 
-    // Sửa: Chỉ cập nhật quantity và sold_count
+    getAuthors: async () => {
+        const [rows] = await db.query('SELECT * FROM authors');
+        return rows;
+    },
+
+    getPublishers: async () => {
+        const [rows] = await db.query('SELECT * FROM publishers');
+        return rows;
+    },
+
     updateStock: async (id, quantitySold) => {
         const query = `UPDATE products SET quantity = quantity - ?, sold_count = sold_count + ? WHERE id = ?`;
         const [result] = await db.query(query, [quantitySold, quantitySold, id]);

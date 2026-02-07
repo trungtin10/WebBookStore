@@ -1,9 +1,9 @@
 const express = require("express");
 const path = require("path");
-const cookieParser = require("cookie-parser"); // Thay session bằng cookie-parser
+const cookieParser = require("cookie-parser");
 const db = require("./db");
 const Product = require("./apps/models/product");
-const { checkUser } = require("./middleware/auth"); // Middleware check JWT toàn cục
+const { checkUser } = require("./middleware/auth");
 
 const app = express();
 
@@ -15,29 +15,23 @@ app.set("views", path.join(__dirname, "apps", "views"));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cookieParser()); // Sử dụng Cookie Parser
+app.use(cookieParser());
 
-// 3. Global Middleware (Thay thế session bằng JWT check)
-// Middleware này sẽ đọc cookie, giải mã JWT và gán user vào res.locals
+// 3. Global Middleware
 app.use(checkUser);
 
 app.use(async (req, res, next) => {
-    // Logic giỏ hàng (Tạm thời lưu giỏ hàng trong Cookie thay vì Session)
-    // Lưu ý: Với JWT, giỏ hàng nên lưu trong DB hoặc Cookie client-side.
-    // Ở đây tôi giả lập lấy từ cookie JSON đơn giản để code cũ không gãy.
-
     let cart = [];
     if (req.cookies.cart) {
         try {
             cart = JSON.parse(req.cookies.cart);
         } catch(e) { cart = []; }
     }
-    req.cart = cart; // Gán vào req để dùng ở route
+    req.cart = cart;
 
     const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
     res.locals.cartCount = totalQty;
 
-    // Logic danh mục
     try {
         const categories = await Product.getCategories();
         res.locals.globalCategories = categories;
@@ -49,11 +43,9 @@ app.use(async (req, res, next) => {
 });
 
 // 4. NẠP ROUTER
-// API Routes (Đáp ứng yêu cầu Web API)
 const apiRoutes = require("./routes/api");
 app.use("/api", apiRoutes);
 
-// Web Routes (Giao diện EJS)
 const routes = require("./routes");
 app.use(routes);
 
@@ -62,7 +54,9 @@ app.use((req, res) => {
     res.status(404).send("Không tìm thấy trang!");
 });
 
-const PORT = 3000;
+// SỬA LẠI CỔNG CHẠY SERVER
+const PORT = 8080; // Đổi từ 3000 sang 8080
+
 app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+    console.log(`Server running at http://localhost:${PORT}`); // Cập nhật log
 });
