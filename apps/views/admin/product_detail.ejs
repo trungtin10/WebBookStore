@@ -38,7 +38,10 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <h5>Giá bán:</h5>
-                                <p class="text-danger fw-bold fs-4"><%= item.price.toLocaleString('vi-VN') %> đ</p>
+                                <p class="text-danger fw-bold fs-4">
+                                    <!-- Ép kiểu Number -->
+                                    <%= Number(item.price).toLocaleString('vi-VN') %> đ
+                                </p>
                             </div>
                             <div class="col-md-6">
                                 <h5>Số lượng tồn kho:</h5>

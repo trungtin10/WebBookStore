@@ -1,19 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-    <title>Đăng nhập</title>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - Bookstore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Đăng nhập</h2>
+    <div class="login-container">
+        <h3 class="text-center mb-4">Đăng nhập</h3>
 
-    <% if (typeof error !== "undefined") { %>
-        <p style="color:red;"><%= error %></p>
-    <% } %>
+        <!-- Thông báo lỗi (Màu đỏ) -->
+        <% if (locals.error) { %>
+            <div class="alert alert-danger" role="alert">
+                <%= error %>
+            </div>
+        <% } %>
 
-    <form method="post" action="/auth/login">
-        <input name="username" placeholder="Username" required><br><br>
-        <input type="password" name="password" placeholder="Password" required><br><br>
-        <button type="submit">Đăng nhập</button>
-    </form>
+        <!-- Thông báo thành công (Màu xanh) -->
+        <% if (locals.success) { %>
+            <div class="alert alert-success" role="alert">
+                <%= success %>
+            </div>
+        <% } %>
+
+        <form action="/login" method="POST" autocomplete="off">
+            <input type="text" style="display:none">
+            <input type="password" style="display:none">
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Tên đăng nhập</label>
+                <input type="text" class="form-control" id="username" name="username" required autocomplete="new-password">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Mật khẩu</label>
+                <input type="password" class="form-control" id="password" name="password" required autocomplete="new-password">
+            </div>
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">Đăng nhập</button>
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="/" class="text-decoration-none">Quay lại trang chủ</a>
+        </div>
+    </div>
 </body>
 </html>

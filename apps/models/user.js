@@ -1,42 +1,94 @@
-// Đi ngược ra 2 cấp: từ models -> apps -> thư mục gốc Web
-const db = require("../../db"); 
+const db = require('../../db');
+const bcrypt = require('bcrypt');
 
-module.exports = {
-    // Lấy dữ liệu tất cả người dùng
+// Tách hàm ra để dùng chung
+const getUserByUsername = async (username) => {
+    try {
+        const [rows] = await db.query("SELECT * FROM users WHERE username = ?", [username]);
+        return rows[0];
+    } catch (error) {
+        throw error;
+    }
+};
+
+const User = {
     getAllUsers: async () => {
         try {
-            // Sử dụng query cho các lệnh SELECT
             const [rows] = await db.query("SELECT * FROM users ORDER BY id DESC");
             return rows;
         } catch (error) {
-            console.error("Lỗi tại getAllUsers:", error.message);
             throw error;
         }
     },
 
-    // Thêm mới người dùng
+    getUserByUsername: getUserByUsername, // Gán hàm vào export
+
+    getUserById: async (id) => {
+        try {
+            const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [id]);
+            return rows[0];
+        } catch (error) {
+            throw error;
+        }
+    },
+
     addUser: async (data) => {
         try {
+            const salt = await bcrypt.genSalt();
+            const hashedPassword = await bcrypt.hash(data.password, salt);
+
             const sql = "INSERT INTO users (username, password, email, full_name, role) VALUES (?, ?, ?, ?, ?)";
-            const params = [data.username, data.password, data.email, data.full_name, data.role];
-            
-            // Sử dụng execute để tăng hiệu năng và bảo mật cho lệnh INSERT/UPDATE
+            const params = [data.username, hashedPassword, data.email, data.full_name, data.role];
             const [result] = await db.execute(sql, params);
             return result;
         } catch (error) {
-            console.error("Lỗi tại addUser:", error.message);
             throw error;
         }
     },
 
-    // Xóa người dùng theo ID
+    updateUser: async (id, data) => {
+        try {
+            const oldUser = await User.getUserById(id);
+            let passwordToSave = oldUser.password;
+
+            if (data.password && data.password !== oldUser.password) {
+                const salt = await bcrypt.genSalt();
+                passwordToSave = await bcrypt.hash(data.password, salt);
+            }
+
+            const sql = "UPDATE users SET username = ?, password = ?, email = ?, full_name = ?, role = ? WHERE id = ?";
+            const params = [data.username, passwordToSave, data.email, data.full_name, data.role, id];
+            const [result] = await db.execute(sql, params);
+            return result;
+        } catch (error) {
+            throw error;
+        }
+    },
+
     deleteUser: async (id) => {
         try {
             const [result] = await db.execute("DELETE FROM users WHERE id = ?", [id]);
             return result;
         } catch (error) {
-            console.error("Lỗi tại deleteUser:", error.message);
+            throw error;
+        }
+    },
+
+    login: async (username, password) => {
+        try {
+            // Sửa: Gọi hàm getUserByUsername đã tách ra
+            const user = await getUserByUsername(username);
+            if (user) {
+                const auth = await bcrypt.compare(password, user.password);
+                if (auth) {
+                    return user;
+                }
+            }
+            return null;
+        } catch (error) {
             throw error;
         }
     }
 };
+
+module.exports = User;

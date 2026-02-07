@@ -18,27 +18,6 @@
             align-items: center;
             border-bottom: 3px solid #c49b63;
         }
-        .sidebar {
-            min-height: 100vh;
-            background-color: #fff;
-            padding-top: 20px;
-            border-right: 1px solid #ddd;
-        }
-        .sidebar a {
-            display: block;
-            padding: 12px 15px;
-            color: #333;
-            text-decoration: none;
-            margin-bottom: 5px;
-            font-weight: 500;
-            transition: 0.2s;
-        }
-        .sidebar a:hover { background-color: #f0f0f0; color: #0d6efd; }
-        .sidebar a.active {
-            background-color: #e9ecef;
-            color: #0d6efd;
-            border-left: 4px solid #0d6efd;
-        }
         .main-content { padding: 20px; }
         .page-title {
             font-size: 24px;
@@ -50,9 +29,18 @@
             padding-bottom: 5px;
         }
         .card-form {
-            max-width: 700px;
+            max-width: 800px;
+            margin: 0 auto; /* Căn giữa form */
             border: none;
             border-radius: 10px;
+        }
+        /* Style cho icon mắt */
+        .toggle-password {
+            cursor: pointer;
+            z-index: 100;
+        }
+        .toggle-password:hover {
+            color: #0d6efd;
         }
     </style>
 </head>
@@ -60,87 +48,104 @@
 
     <div class="admin-header">
         <h2><a href="/admin" class="text-white text-decoration-none">Khu vực quản trị</a></h2>
-        <a href="/auth/logout" class="btn btn-sm btn-danger">Đăng xuất</a>
+        <div>
+            <a href="/admin/user" class="btn btn-outline-light btn-sm me-2">
+                <i class="fas fa-arrow-left"></i> Quay lại
+            </a>
+            <a href="/auth/logout" class="btn btn-sm btn-danger">Đăng xuất</a>
+        </div>
     </div>
 
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-md-2 sidebar">
-                <a href="/admin"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</a>
-                <a href="/admin/products"><i class="fas fa-box me-2"></i> Quản lý Sản phẩm</a>
-                <a href="/admin/users" class="active"><i class="fas fa-users me-2"></i> Quản lý Người dùng</a>
-                <hr>
-                <a href="/"><i class="fas fa-home me-2"></i> Về trang chủ</a>
+    <div class="container main-content">
+        <div class="text-center">
+            <h3 class="page-title"><i class="fas fa-user-plus"></i> Thêm mới người dùng</h3>
+        </div>
+
+        <div class="card shadow-sm card-form overflow-hidden">
+            <div class="card-header bg-dark text-white">
+                <i class="fas fa-info-circle me-2"></i> Thông tin tài khoản
             </div>
-
-            <div class="col-md-10 main-content">
-                <h3 class="page-title"><i class="fas fa-user-plus"></i> Thêm mới người dùng</h3>
-
-                <div class="card shadow-sm card-form overflow-hidden">
-                    <div class="card-header bg-dark text-white">
-                        <i class="fas fa-info-circle me-2"></i> Thông tin tài khoản
+            <div class="card-body p-4">
+                <form action="/admin/user/add" method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Tên đăng nhập</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" name="username" class="form-control" placeholder="Ví dụ: admin2024" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Mật khẩu</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                                <input type="password" name="password" id="passwordInput" class="form-control" placeholder="********" required>
+                                <!-- Icon mắt -->
+                                <span class="input-group-text toggle-password" onclick="togglePassword()">
+                                    <i class="fas fa-eye" id="eyeIcon"></i>
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-4">
-                        <form action="/admin/user/add" method="POST">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Tên đăng nhập</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
-                                        <input type="text" name="username" class="form-control" placeholder="Ví dụ: admin2024" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Mật khẩu</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="fas fa-key"></i></span>
-                                        <input type="password" name="password" class="form-control" placeholder="********" required>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Địa chỉ Email</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                                    <input type="email" name="email" class="form-control" placeholder="email@vi-du.com" required>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Họ và tên</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                    <input type="text" name="full_name" class="form-control" placeholder="Nguyễn Văn A" required>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label fw-bold">Vai trò hệ thống</label>
-                                <div class="input-group">
-                                    <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
-                                    <select name="role" class="form-select">
-                                        <option value="user">Khách hàng (USER)</option>
-                                        <option value="admin">Quản trị viên (ADMIN)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <hr>
-
-                            <div class="d-flex gap-2 justify-content-end">
-                                <a href="/admin/users" class="btn btn-outline-secondary px-4">
-                                    <i class="fas fa-times"></i> Hủy bỏ
-                                </a>
-                                <button type="submit" class="btn btn-success px-4">
-                                    <i class="fas fa-save"></i> Lưu người dùng
-                                </button>
-                            </div>
-                        </form>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Địa chỉ Email</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" name="email" class="form-control" placeholder="email@vi-du.com" required>
+                        </div>
                     </div>
-                </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Họ và tên</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                            <input type="text" name="full_name" class="form-control" placeholder="Nguyễn Văn A" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Vai trò hệ thống</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                            <select name="role" class="form-select">
+                                <option value="user">Khách hàng (USER)</option>
+                                <option value="admin">Quản trị viên (ADMIN)</option>
+                            </select>
+                        </div>
+                        <div class="form-text">Quyền ADMIN có thể quản lý sản phẩm và người dùng khác.</div>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="/admin/user" class="btn btn-outline-secondary px-4">
+                            <i class="fas fa-times"></i> Hủy bỏ
+                        </a>
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="fas fa-save"></i> Lưu người dùng
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('passwordInput');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            }
+        }
+    </script>
 </body>
 </html>

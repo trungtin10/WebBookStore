@@ -59,7 +59,10 @@
                                 </td>
                                 <td class="fw-bold"><%= item.name %></td>
                                 <td><%= item.author %></td>
-                                <td class="text-danger fw-bold"><%= item.price.toLocaleString('vi-VN') %> đ</td>
+                                <td class="text-danger fw-bold">
+                                    <!-- Ép kiểu Number -->
+                                    <%= Number(item.price).toLocaleString('vi-VN') %> đ
+                                </td>
                                 <td><%= item.quantity %></td>
                                 <td>
                                     <a href="/admin/products/detail/<%= item.id %>" class="btn btn-info btn-sm me-1 text-white" title="Xem chi tiết">
