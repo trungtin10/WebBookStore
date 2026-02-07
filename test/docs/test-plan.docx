@@ -1,0 +1,15 @@
+🎯 mục tiêu kiểm thử
+đảm bảo chức năng user và admin hoạt động đúng
+phát hiện lỗi logic
+đảm bảo luồng đặt hàng đúng
+🎯 phạm vi kiểm thử
+auth
+product
+cart
+order
+admin product
+🎯 môi trường
+node.js
+mysql
+chrome
+macOS
