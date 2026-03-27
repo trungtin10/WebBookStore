@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebBookStore | GitHub Pages</title>
+  <meta name="description" content="Landing page for WebBookStore deployment on GitHub Pages." />
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --brand: #0f172a;
+      --brand-600: #0b1220;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(circle at top right, #e2e8f0 0%, var(--bg) 38%, #eef2ff 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .wrap {
+      width: 100%;
+      max-width: 920px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.10);
+      overflow: hidden;
+    }
+    .hero {
+      padding: 34px 30px 24px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, #fff, #f8fbff);
+    }
+    .badge {
+      display: inline-block;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #334155;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: 34px;
+      line-height: 1.2;
+      letter-spacing: .2px;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .content {
+      padding: 24px 30px 30px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      background: #fff;
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 17px;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .actions {
+      padding: 0 30px 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      border: 1px solid var(--brand);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-weight: 700;
+      font-size: 14px;
+      transition: .15s ease;
+      color: var(--brand);
+      background: #fff;
+    }
+    .btn.primary {
+      background: var(--brand);
+      color: #fff;
+    }
+    .btn.primary:hover { background: var(--brand-600); }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, .10);
+    }
+    .foot {
+      border-top: 1px solid var(--border);
+      padding: 14px 30px;
+      color: #64748b;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    code {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    @media (max-width: 900px) {
+      body { padding: 16px; }
+      .hero { padding: 26px 22px 20px; }
+      .content { padding: 20px 22px 22px; }
+      .actions { padding: 0 22px 20px; }
+      .foot { padding: 12px 22px; }
+    }
+    @media (max-width: 760px) {
+      .wrap { border-radius: 12px; }
+      .content { grid-template-columns: 1fr; gap: 12px; }
+      h1 { font-size: 27px; }
+      .sub { font-size: 15px; }
+      .card h2 { font-size: 16px; }
+      .actions { gap: 8px; }
+      .btn {
+        width: 100%;
+        padding: 12px 14px;
+      }
+      .foot {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+    @media (max-width: 420px) {
+      body { padding: 10px; }
+      .hero { padding: 20px 16px 16px; }
+      .content { padding: 16px; }
+      .actions { padding: 0 16px 16px; }
+      .foot { padding: 10px 16px; font-size: 12px; }
+      .badge { font-size: 11px; }
+      h1 { font-size: 23px; }
+      .sub { font-size: 14px; }
+      .card { padding: 12px; }
+      .card p { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <span class="badge">WebBookStore • GitHub Pages</span>
+      <h1>Trang giới thiệu dự án WebBookStore</h1>
+      <p class="sub">
+        Đây là trang tĩnh dành cho GitHub Pages. Ứng dụng chính của WebBookStore chạy bằng Node.js/Express + EJS,
+        cần backend server để sử dụng đầy đủ tính năng (đăng nhập, giỏ hàng, thanh toán, quản trị...).
+      </p>
+    </section>
+
+    <section class="content">
+      <article class="card">
+        <h2>Kiến trúc dự án</h2>
+        <p>Backend MVC với lớp Controller / Service / Repository, render view EJS và API riêng cho web + admin.</p>
+      </article>
+      <article class="card">
+        <h2>Công nghệ chính</h2>
+        <p>Node.js, Express, EJS, MySQL, Bootstrap, Service Worker và cấu trúc module hóa theo chức năng.</p>
+      </article>
+    </section>
+
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/trungtin10/WebBookStore" target="_blank" rel="noopener noreferrer">Xem source code</a>
+      <a class="btn" href="./">Tải lại trang</a>
+    </div>
+
+    <footer class="foot">
+      <span>Deploy by GitHub Actions Pages</span>
+      <span>Run app local: <code>npm install</code> + <code>npm start</code></span>
+    </footer>
+  </main>
+</body>
+</html>
