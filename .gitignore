@@ -16,6 +16,12 @@ pnpm-debug.log*
 # OS
 .DS_Store
 
+# IDE
+.idea/
+
+# uploads (runtime)
+public/uploads/
+
 # build output
 dist/
 build/

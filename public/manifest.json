@@ -1,0 +1,19 @@
+{
+  "name": "BookTotal - Thế giới sách",
+  "short_name": "BookTotal",
+  "description": "Website bán sách trực tuyến - Khám phá thế giới tri thức",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a2e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["books", "shopping"]
+}

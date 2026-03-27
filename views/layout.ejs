@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookstore - Thế giới sách</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <%- typeof css !== 'undefined' ? css : '' %>
+</head>
+<body>
+
+    <%- include('partials/menu') %>
+
+    <main>
+        <%- body %>
+    </main>
+
+    <!-- Footer -->
+    <%- include('partials/footer') %>
+
+    <!-- Scripts -->
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+
+    <!-- Render block 'script' nếu có -->
+    <%- typeof script !== 'undefined' ? script : '' %>
+</body>
+</html>

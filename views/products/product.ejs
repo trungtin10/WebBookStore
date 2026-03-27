@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title><%= title || 'Sản phẩm' %> - BookTotal</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+
+<body>
+    <%- include('../partials/menu') %>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h2 class="page-title"><%= title %></h2>
+            <p id="resultCount" class="text-muted mt-2 mb-0 d-none"></p>
+        </div>
+    </div>
+
+    <!-- Product List -->
+    <div class="container mb-5">
+        <div id="loadingProducts" class="text-center py-5">
+            <div class="spinner-border text-danger" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải sản phẩm...</p>
+        </div>
+        <div id="productsGrid" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 d-none"></div>
+        <div id="emptyState" class="empty-state d-none">
+            <i class="fas fa-search"></i>
+            <h4>Không tìm thấy sản phẩm nào</h4>
+            <p>Vui lòng thử lại với từ khóa khác hoặc quay lại trang chủ.</p>
+            <a href="/" class="btn btn-primary mt-3">Về trang chủ</a>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script>
+        (function() {
+            const pageType = '<%= typeof pageType !== "undefined" ? pageType : "search" %>';
+            const keyword = '<%= typeof keyword !== "undefined" ? keyword : "" %>';
+            const categoryId = '<%= typeof categoryId !== "undefined" ? categoryId : "" %>';
+            let apiUrl = '/api/products?';
+            if (pageType === 'search') apiUrl += keyword ? 'keyword=' + encodeURIComponent(keyword) : '';
+            else if (pageType === 'category') apiUrl += 'category_id=' + categoryId;
+            else apiUrl += 'type=' + pageType;
+            if (!keyword && pageType === 'search') apiUrl = '/api/products';
+
+            fetch(apiUrl).then(r => r.json()).then(data => {
+                document.getElementById('loadingProducts').classList.add('d-none');
+                if (data.success && data.data && data.data.length > 0) {
+                    if (keyword) {
+                        const rc = document.getElementById('resultCount');
+                        rc.textContent = 'Tìm thấy ' + data.data.length + ' kết quả cho từ khóa "' + keyword + '"';
+                        rc.classList.remove('d-none');
+                    }
+                    if (categoryId) {
+                        fetch('/api/categories/' + categoryId).then(r2 => r2.json()).then(cat => {
+                            if (cat.success && cat.data) {
+                                document.querySelector('.page-title').textContent = cat.data.name;
+                                const rc = document.getElementById('resultCount');
+                                rc.textContent = 'Danh mục: ' + cat.data.name;
+                                rc.classList.remove('d-none');
+                            }
+                        });
+                    }
+                    const grid = document.getElementById('productsGrid');
+                    grid.classList.remove('d-none');
+                    grid.innerHTML = data.data.map(p => {
+                        let imgSrc = (p.image_url && !p.image_url.startsWith('http')) ? '/images/' + p.image_url : (p.image_url || '/images/default.jpg');
+                        return '<div class="col"><div class="product-card"><a href="/product/' + p.id + '" class="product-img-wrapper d-block"><img src="' + imgSrc + '" class="product-img" alt="' + p.name + '" onerror="this.src=\'https://picsum.photos/300/400\'"></a><div class="product-body"><a href="/product/' + p.id + '" class="product-title" title="' + p.name + '">' + p.name + '</a><div class="product-author">' + (p.author_name || 'Đang cập nhật') + '</div><div class="product-price">' + Number(p.price).toLocaleString('vi-VN') + ' đ</div><form class="add-to-cart-form" action="/cart/add/' + p.id + '" method="POST"><input type="hidden" name="quantity" value="1"><button type="submit" class="btn btn-add-cart"><i class="fas fa-cart-plus me-1"></i> Thêm vào giỏ</button></form></div></div></div>';
+                    }).join('');
+                    initAddToCartForms();
+                } else {
+                    document.getElementById('emptyState').classList.remove('d-none');
+                }
+            }).catch(() => {
+                document.getElementById('loadingProducts').classList.add('d-none');
+                document.getElementById('emptyState').classList.remove('d-none');
+            });
+
+            function initAddToCartForms() {
+                document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const action = this.action;
+                const formData = new FormData(this);
+                const quantity = formData.get('quantity');
+
+                fetch(action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity: quantity })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (window.showNotice) window.showNotice(data.message || 'Đã thêm vào giỏ hàng thành công!');
+                        if (window.updateCartDropdown) window.updateCartDropdown();
+                        const badge = document.getElementById('cartBadgeCount');
+                        if (badge) {
+                            badge.textContent = data.totalQty > 99 ? '99+' : data.totalQty;
+                            badge.style.display = data.totalQty > 0 ? '' : 'none';
+                        }
+                    } else {
+                        if (window.showNotice) window.showNotice(data.message || 'Có lỗi xảy ra', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (window.showNotice) window.showNotice('Đã xảy ra lỗi. Vui lòng thử lại.', 'error');
+                });
+            });
+            });
+            }
+        })();
+    </script>
+</body>
+
+</html>

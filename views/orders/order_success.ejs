@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đặt hàng thành công - Bookstore</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+<body>
+    <%- include('../partials/menu') %>
+
+    <div class="main-content"></div>
+
+    <script>
+        window.__ORDER_SUCCESS_PAYLOAD__ = { orderId: <%- JSON.stringify(orderId) %> };
+    </script>
+
+    <%- include('../partials/footer') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const payload = window.__ORDER_SUCCESS_PAYLOAD__ || {};
+            const orderId = payload.orderId;
+            const html = `
+                <div style="font-weight:950;font-size:1.35rem;color:#198754;letter-spacing:.2px;margin-bottom:6px;">
+                    ĐẶT HÀNG THÀNH CÔNG!
+                </div>
+                <div style="color:#6b7280;margin-bottom:10px;">Cảm ơn bạn đã mua sắm tại BookTotal.</div>
+                <div style="font-weight:850;margin-bottom:6px;">Mã đơn hàng: <span style="color:#111827;">#${orderId}</span></div>
+                <div style="color:#6b7280;font-size:.95rem;">Chúng tôi sẽ sớm liên hệ để xác nhận đơn hàng của bạn.</div>
+            `;
+            if (window.showPopup) {
+                window.showPopup({
+                    title: 'Thông báo',
+                    variant: 'success',
+                    html,
+                    actions: [
+                        { label: 'Tiếp tục mua sắm', className: 'btn btn-primary', href: '/' },
+                        { label: 'Xem lịch sử đơn hàng', className: 'btn btn-outline-secondary', href: '/orders' },
+                        { label: 'Quay về', className: 'btn btn-light', href: '/' }
+                    ]
+                });
+            }
+        });
+    </script>
+</body>
+</html>

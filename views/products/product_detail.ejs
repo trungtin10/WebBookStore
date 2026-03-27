@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title id="pageTitle">Đang tải... - Bookstore</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+
+<body>
+    <%- include('../partials/menu') %>
+
+        <!-- notifications are handled globally via window.showNotice -->
+
+        <div class="container mt-4 mb-5">
+            <div id="loadingProduct" class="text-center py-5">
+                <div class="spinner-border text-danger" role="status"></div>
+                <p class="mt-2 text-muted">Đang tải sản phẩm...</p>
+            </div>
+            <div id="productContent" class="d-none">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-white shadow-sm p-3 rounded">
+                    <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a href="#" id="breadcrumbCategory">Sách</a></li>
+                    <li class="breadcrumb-item active" id="breadcrumbName">-</li>
+                </ol>
+            </nav>
+
+            <div class="row mb-4">
+                <!-- CỘT TRÁI -->
+                <div class="col-lg-4 col-md-5">
+                    <div class="content-box left-sidebar bg-white p-3 rounded shadow-sm mb-3">
+                        <div class="product-img-box text-center mb-3">
+                            <img id="productImage" src="/images/default.jpg" class="product-img img-fluid rounded" alt="" onerror="this.src='https://picsum.photos/400/600'">
+                        </div>
+
+                        <% if (locals.user && user.role==='admin' ) { %>
+                            <div class="admin-mode-badge">
+                                <i class="fas fa-user-shield me-2"></i> Chế độ Quản trị viên
+                            </div>
+                            <div class="action-buttons d-grid gap-2">
+                                <a href="#" id="adminEditLink" class="btn btn-warning py-2 fw-bold">
+                                    <i class="fas fa-edit me-2"></i> Chỉnh sửa sản phẩm
+                                </a>
+                                <button class="btn btn-outline-secondary py-2" disabled style="cursor: not-allowed; opacity: 0.6;">
+                                    <i class="fas fa-shopping-cart me-2"></i> Không thể mua hàng
+                                </button>
+                            </div>
+                            <% } else { %>
+                                <div class="action-buttons d-grid gap-2">
+                                    <button class="btn btn-outline-danger py-2 fw-bold" id="btnAddToCart" data-id="">
+                                        <i class="fas fa-cart-plus"></i> Thêm giỏ hàng
+                                    </button>
+                                    <button class="btn btn-danger py-2 fw-bold" id="btnBuyNow" data-id="">
+                                        Mua ngay
+                                    </button>
+                                </div>
+                                <% } %>
+
+                                    <div class="policy-box mt-3 pt-3 border-top">
+                                        <ul class="list-unstyled small text-muted">
+                                            <li class="mb-2"><i class="fas fa-truck text-success me-2"></i> Miễn phí
+                                                giao hàng đơn từ 150k</li>
+                                            <li class="mb-2"><i class="fas fa-undo text-primary me-2"></i> Đổi trả miễn
+                                                phí trong 30 ngày</li>
+                                            <li><i class="fas fa-check-shield text-warning me-2"></i> Cam kết chính hãng
+                                                100%</li>
+                                        </ul>
+                                    </div>
+                    </div>
+                </div>
+
+                <!-- CỘT PHẢI -->
+                <div class="col-lg-8 col-md-7">
+                    <div class="content-box bg-white p-4 rounded shadow-sm mb-3">
+                        <h1 class="product-title h3 fw-bold mb-3" id="productName">-</h1>
+
+                        <div class="meta-info-grid">
+                            <div class="meta-item"><span class="meta-label">Nhà cung cấp:</span><span class="meta-value"><a href="#" class="highlight-text" id="metaSupplier">Đang cập nhật</a></span></div>
+                            <div class="meta-item"><span class="meta-label">Tác giả:</span><span class="meta-value"><a href="#" class="highlight-text" id="metaAuthor">Đang cập nhật</a></span></div>
+                            <div class="meta-item"><span class="meta-label">Nhà xuất bản:</span><span class="meta-value" id="metaPublisher">---</span></div>
+                            <div class="meta-item"><span class="meta-label">Hình thức bìa:</span><span class="meta-value" id="metaCover">---</span></div>
+                        </div>
+
+                        <div class="rating-summary-top mb-3">
+                            <div class="text-warning me-2">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                            <span class="text-muted" id="reviewCount">(0 đánh giá)</span>
+                            <span class="mx-2 text-muted">|</span>
+                            <span class="text-muted" id="soldCount">Đã bán 0</span>
+                        </div>
+
+                        <div class="price-box my-3">
+                            <span class="current-price h2 text-danger fw-bold me-3" id="productPrice">0 đ</span>
+                            <span class="badge bg-success" id="stockBadge"><i class="fas fa-check"></i> Còn hàng</span>
+                            <span class="badge bg-secondary d-none" id="outOfStockBadge">Hết hàng</span>
+                        </div>
+
+                        <div class="shipping-info">
+                            <div class="shipping-row align-items-center">
+                                <span class="shipping-label">Giao hàng đến:</span>
+                                <span class="shipping-address" id="currentAddress">Hồ Chí Minh</span>
+                                <span class="btn-change-address ms-2" data-bs-toggle="modal"
+                                    data-bs-target="#addressModal">Thay đổi</span>
+                            </div>
+                            <div class="shipping-row">
+                                <i class="fas fa-truck-fast text-success me-2 mt-1"></i>
+                                <div class="shipping-estimate" id="deliveryDate">Đang tính toán...</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="fw-bold">Số lượng:</span>
+                            <div class="input-group input-group-sm" style="width: 120px;">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="decreaseQty()">-</button>
+                                <input type="number" class="form-control text-center fw-bold" value="1" id="qtyInput" min="1" step="1" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="increaseQty()">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MÔ TẢ SẢN PHẨM -->
+                    <div class="content-box bg-white p-4 rounded shadow-sm mb-3">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2">Mô tả sản phẩm</h5>
+                        <div class="product-description" id="productDescription">Đang cập nhật nội dung...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ĐÁNH GIÁ KHÁCH HÀNG -->
+            <div class="content-box bg-white p-4 rounded shadow-sm mb-4">
+                <h5 class="fw-bold mb-3">Đánh giá khách hàng</h5>
+                <div class="rating-overview" id="ratingOverview">
+                    <div class="rating-left">
+                        <div class="rating-score" id="avgRating">0/5</div>
+                        <div class="text-warning mb-1" id="ratingStars"></div>
+                        <div class="text-muted small" id="ratingCount">(0 đánh giá)</div>
+                    </div>
+                    <div class="rating-right" id="ratingBars"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="review-filter">
+                        <div class="filter-btn active">Tất cả</div>
+                        <div class="filter-btn">5 Sao</div>
+                        <div class="filter-btn">4 Sao</div>
+                        <div class="filter-btn">3 Sao</div>
+                    </div>
+                    <% if (canReview) { %>
+                        <button class="btn btn-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                            <i class="fas fa-pen me-2"></i> Viết đánh giá
+                        </button>
+                    <% } else if (locals.user && user.role==='admin') { %>
+                        <button class="btn btn-secondary btn-sm px-4" disabled>Admin không thể đánh giá</button>
+                    <% } else { %>
+                        <button class="btn btn-outline-danger btn-sm" onclick="openLoginModal()">Đăng nhập để đánh giá</button>
+                    <% } %>
+                </div>
+                <div class="review-list" id="reviewList"></div>
+            </div>
+
+            <!-- SẢN PHẨM LIÊN QUAN -->
+            <div id="relatedSection" class="content-box bg-white p-4 rounded shadow-sm mb-4 d-none">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">Sản phẩm liên quan khác</h5>
+                <div class="row row-cols-2 row-cols-md-5 g-3" id="relatedGrid"></div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Modal Viết Đánh Giá -->
+        <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Viết đánh giá sản phẩm</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="reviewForm" action="" method="POST">
+                            <div class="text-center mb-3">
+                                <p class="mb-2 text-muted small">Bạn cảm thấy sản phẩm này như thế nào?</p>
+                                <div class="rating-stars-input">
+                                    <input type="radio" id="star5" name="rating" value="5" checked
+                                        onclick="setRatingText('Tuyệt vời')"><label for="star5"
+                                        title="Tuyệt vời">★</label>
+                                    <input type="radio" id="star4" name="rating" value="4"
+                                        onclick="setRatingText('Hài lòng')"><label for="star4"
+                                        title="Hài lòng">★</label>
+                                    <input type="radio" id="star3" name="rating" value="3"
+                                        onclick="setRatingText('Bình thường')"><label for="star3"
+                                        title="Bình thường">★</label>
+                                    <input type="radio" id="star2" name="rating" value="2"
+                                        onclick="setRatingText('Tệ')"><label for="star2" title="Tệ">★</label>
+                                    <input type="radio" id="star1" name="rating" value="1"
+                                        onclick="setRatingText('Rất tệ')"><label for="star1" title="Rất tệ">★</label>
+                                </div>
+                                <div id="ratingText" class="rating-text">Tuyệt vời</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <textarea name="comment" class="form-control" rows="4"
+                                    placeholder="Hãy chia sẻ cảm nhận của bạn về sản phẩm này nhé..."
+                                    required></textarea>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger fw-bold py-2">Gửi đánh giá</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Chọn Địa Chỉ -->
+        <div class="modal fade" id="addressModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Chọn địa chỉ giao hàng</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="address-select-group">
+                            <label>Tỉnh/Thành phố</label>
+                            <select class="form-select" id="provinceSelect" onchange="updateDistricts()">
+                                <option value="Hồ Chí Minh">Hồ Chí Minh</option>
+                                <option value="Hà Nội">Hà Nội</option>
+                                <option value="Đà Nẵng">Đà Nẵng</option>
+                                <option value="Cần Thơ">Cần Thơ</option>
+                            </select>
+                        </div>
+                        <div class="address-select-group">
+                            <label>Quận/Huyện</label>
+                            <select class="form-select" id="districtSelect">
+                                <option value="Quận 1">Quận 1</option>
+                                <option value="Quận 3">Quận 3</option>
+                                <option value="Thủ Đức">Thủ Đức</option>
+                            </select>
+                        </div>
+                        <div class="address-select-group">
+                            <label>Phường/Xã</label>
+                            <select class="form-select" id="wardSelect">
+                                <option value="Phường Bến Nghé">Phường Bến Nghé</option>
+                                <option value="Phường Đa Kao">Phường Đa Kao</option>
+                            </select>
+                        </div>
+                        <div class="d-grid mt-4">
+                            <button type="button" class="btn btn-danger fw-bold" onclick="saveAddress()">Xác
+                                nhận</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include('../partials/footer') %>
+
+            <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+            <script>
+                function showSuccessToast(message) {
+                    if (window.showNotice) window.showNotice(message || 'Đã thêm vào giỏ hàng thành công!');
+                }
+
+                const productId = '<%= productId %>';
+                const productIdNum = parseInt(productId, 10);
+
+                Promise.all([
+                    fetch('/api/products/' + productId).then(r => r.json()),
+                    fetch('/api/products/' + productId + '/related').then(r => r.json()),
+                    fetch('/api/products/' + productId + '/reviews').then(r => r.json())
+                ]).then(([productRes, relatedRes, reviewsRes]) => {
+                    document.getElementById('loadingProduct').classList.add('d-none');
+                    if (!productRes.success || !productRes.data) {
+                        document.body.innerHTML = '<div class="container py-5 text-center"><h3>Sản phẩm không tồn tại</h3><a href="/" class="btn btn-primary mt-3">Về trang chủ</a></div>';
+                        return;
+                    }
+                    const product = productRes.data;
+                    const related = relatedRes.success && relatedRes.data ? relatedRes.data : [];
+                    const reviews = reviewsRes.success && reviewsRes.data ? reviewsRes.data : [];
+
+                    document.getElementById('productContent').classList.remove('d-none');
+                    document.getElementById('pageTitle').textContent = product.name + ' - Bookstore';
+                    document.getElementById('breadcrumbName').textContent = product.name;
+                    document.getElementById('breadcrumbCategory').textContent = product.category_name || 'Sách';
+                    document.getElementById('breadcrumbCategory').href = product.category_id ? '/category/' + product.category_id : '#';
+                    let imgSrc = (product.image_url && !product.image_url.startsWith('http')) ? '/images/' + product.image_url : (product.image_url || '/images/default.jpg');
+                    document.getElementById('productImage').src = imgSrc;
+                    document.getElementById('productImage').alt = product.name;
+                    document.getElementById('productName').textContent = product.name;
+                    document.getElementById('metaSupplier').textContent = product.supplier_name || 'Đang cập nhật';
+                    document.getElementById('metaAuthor').textContent = product.author_name || 'Đang cập nhật';
+                    document.getElementById('metaPublisher').textContent = product.publisher_name || '---';
+                    document.getElementById('metaCover').textContent = product.cover_type || '---';
+                    document.getElementById('reviewCount').textContent = '(' + reviews.length + ' đánh giá)';
+                    document.getElementById('soldCount').textContent = 'Đã bán ' + (product.sold_count || 0);
+                    document.getElementById('productPrice').textContent = Number(product.price).toLocaleString('vi-VN') + ' đ';
+                    if (product.quantity > 0) {
+                        document.getElementById('stockBadge').classList.remove('d-none');
+                        document.getElementById('outOfStockBadge').classList.add('d-none');
+                    } else {
+                        document.getElementById('stockBadge').classList.add('d-none');
+                        document.getElementById('outOfStockBadge').classList.remove('d-none');
+                    }
+                    document.getElementById('productDescription').innerHTML = product.description || 'Đang cập nhật nội dung...';
+                    document.getElementById('btnAddToCart').dataset.id = product.id;
+                    document.getElementById('btnBuyNow').dataset.id = product.id;
+                    document.getElementById('reviewForm').action = '/product/' + product.id + '/review';
+                    if (document.getElementById('adminEditLink')) document.getElementById('adminEditLink').href = '/admin/products/edit/' + product.id;
+
+                    const total = reviews.reduce((s, r) => s + r.rating, 0);
+                    const avgRating = reviews.length > 0 ? (total / reviews.length).toFixed(1) : 0;
+                    document.getElementById('avgRating').textContent = avgRating + '/5';
+                    document.getElementById('ratingCount').textContent = '(' + reviews.length + ' đánh giá)';
+                    let starsHtml = '';
+                    for (let i = 1; i <= 5; i++) starsHtml += i <= Math.round(avgRating) ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>';
+                    document.getElementById('ratingStars').innerHTML = starsHtml;
+                    let barsHtml = '';
+                    for (let i = 5; i >= 1; i--) {
+                        const count = reviews.filter(r => r.rating == i).length;
+                        const percent = reviews.length > 0 ? (count / reviews.length * 100) : 0;
+                        barsHtml += '<div class="rating-bar-row"><span>' + i + ' sao</span><div class="rating-bar-track"><div class="rating-bar-fill" style="width:' + percent + '%"></div></div><span style="text-align:right">' + percent.toFixed(0) + '%</span></div>';
+                    }
+                    document.getElementById('ratingBars').innerHTML = barsHtml;
+                    document.getElementById('reviewList').innerHTML = reviews.length > 0 ? reviews.map(r => {
+                        let replyHtml = r.admin_reply ? '<div class="admin-reply-box"><div class="admin-reply-header"><i class="fas fa-user-shield"></i> BookTotal</div><div class="admin-reply-content">' + r.admin_reply + '</div></div>' : '';
+                        let starHtml = '';
+                        for (let i = 0; i < r.rating; i++) starHtml += '★';
+                        for (let i = r.rating; i < 5; i++) starHtml += '☆';
+                        return '<div class="review-item"><div class="review-avatar">' + (r.full_name ? r.full_name.charAt(0).toUpperCase() : 'U') + '</div><div class="review-content"><div class="review-header"><span class="review-name">' + (r.full_name || 'Người dùng ẩn danh') + '</span><span class="verified-badge"><i class="fas fa-check-circle"></i> Đã mua hàng</span></div><div class="review-stars text-warning">' + starHtml + '</div><div class="review-text">' + r.comment + '</div><div class="review-date">' + new Date(r.created_at).toLocaleDateString('vi-VN') + '</div>' + replyHtml + '</div></div>';
+                    }).join('') : '<p class="text-muted text-center py-3 small">Chưa có đánh giá nào.</p>';
+
+                    if (related.length > 0) {
+                        document.getElementById('relatedSection').classList.remove('d-none');
+                        document.getElementById('relatedGrid').innerHTML = related.map(item => {
+                            let rImg = (item.image_url && !item.image_url.startsWith('http')) ? '/images/' + item.image_url : (item.image_url || '/images/default.jpg');
+                            return '<div class="col"><a href="/product/' + item.id + '" class="text-decoration-none"><div class="card related-card"><img src="' + rImg + '" class="related-img card-img-top" alt="' + item.name + '" onerror="this.src=\'https://picsum.photos/200/300\'"><div class="card-body p-2"><h6 class="related-title">' + item.name + '</h6><div class="related-price">' + Number(item.price).toLocaleString('vi-VN') + ' đ</div></div></div></a></div>';
+                        }).join('');
+                    }
+                    const btnAdd = document.getElementById('btnAddToCart');
+                    if (btnAdd) btnAdd.addEventListener('click', function() {
+                        const pid = this.dataset.id;
+                        const qty = document.getElementById('qtyInput').value;
+                        if (qty % 1 !== 0 || qty <= 0) { if (window.showNotice) window.showNotice('Số lượng phải là số nguyên dương lớn hơn 0', 'error'); return; }
+                        fetch('/cart/add/' + pid, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: qty }) })
+                            .then(r => r.json()).then(data => {
+                                if (data.success) {
+                                    showSuccessToast(data.message || 'Đã thêm vào giỏ hàng thành công!');
+                                    if (window.updateCartDropdown) window.updateCartDropdown();
+                                    const cc = document.querySelector('.cart-count');
+                                    if (cc) cc.textContent = data.totalQty;
+                                } else if (window.showNotice) window.showNotice(data.message || 'Có lỗi xảy ra', 'error');
+                            }).catch(() => { if (window.showNotice) window.showNotice('Đã xảy ra lỗi. Vui lòng thử lại.', 'error'); });
+                    });
+
+                    const btnBuyNow = document.getElementById('btnBuyNow');
+                    if (btnBuyNow) btnBuyNow.addEventListener('click', function() {
+                        const pid = this.dataset.id;
+                        const qty = document.getElementById('qtyInput').value;
+                        if (qty % 1 !== 0 || qty <= 0) { if (window.showNotice) window.showNotice('Số lượng phải là số nguyên dương lớn hơn 0', 'error'); return; }
+                        fetch('/cart/add/' + pid, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: qty }) })
+                            .then(r => r.json()).then(data => {
+                                if (data.success) {
+                                    window.location.href = '/cart';
+                                } else {
+                                    if (window.showNotice) window.showNotice(data.message || 'Có lỗi xảy ra', 'error');
+                                }
+                            }).catch(() => { if (window.showNotice) window.showNotice('Đã xảy ra lỗi. Vui lòng thử lại.', 'error'); });
+                    });
+                }).catch(() => {
+                    document.getElementById('loadingProduct').classList.add('d-none');
+                    document.body.innerHTML = '<div class="container py-5 text-center"><h3>Lỗi tải sản phẩm</h3><a href="/" class="btn btn-primary mt-3">Về trang chủ</a></div>';
+                });
+
+
+                function openLoginModal() {
+                    const currentUrl = window.location.pathname;
+                    const loginForm = document.querySelector('#loginModal form');
+                    if (loginForm) {
+                        if (!loginForm.querySelector('input[name="returnUrl"]')) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'returnUrl';
+                            input.value = currentUrl;
+                            loginForm.appendChild(input);
+                        } else {
+                            loginForm.querySelector('input[name="returnUrl"]').value = currentUrl;
+                        }
+                        const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                        loginModal.show();
+                    }
+                }
+            </script>
+</body>
+
+</html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập - Bookstore</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+<body>
+    <%- include('../partials/menu') %>
+
+    <div class="main-content">
+        <div class="auth-card">
+            <h2 class="auth-title">ĐĂNG NHẬP</h2>
+
+            <% if (locals.loginError) { %>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        if (window.showNotice) window.showNotice(<%- JSON.stringify(loginError) %>, 'error');
+                    });
+                </script>
+            <% } %>
+
+            <form action="/login" method="POST">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tên đăng nhập</label>
+                    <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Mật khẩu</label>
+                    <input type="password" class="form-control" name="password" required>
+                </div>
+                <button type="submit" class="btn-auth">ĐĂNG NHẬP</button>
+            </form>
+
+            <div class="text-center mt-4">
+                <p class="text-muted">Chưa có tài khoản? <a href="/register" class="text-decoration-none fw-bold text-danger">Đăng ký ngay</a></p>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

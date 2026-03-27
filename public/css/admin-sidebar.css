@@ -1,0 +1,42 @@
+/* Admin sidebar (admin/partials/menu.ejs) */
+.admin-sidebar {
+    min-height: 100vh;
+    background-color: #1a1a2e;
+    color: #fff;
+    padding-top: 20px;
+}
+
+.admin-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #c49b63;
+    text-align: center;
+    margin-bottom: 30px;
+    display: block;
+    text-decoration: none;
+}
+
+.admin-nav .nav-link {
+    color: #a8a8b3;
+    padding: 12px 20px;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: 0.2s;
+}
+
+.admin-nav .nav-link:hover,
+.admin-nav .nav-link.active {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left-color: #c49b63;
+}
+
+.admin-nav i {
+    width: 25px;
+    text-align: center;
+    margin-right: 10px;
+}
+
+.admin-user {
+    display: none;
+}
