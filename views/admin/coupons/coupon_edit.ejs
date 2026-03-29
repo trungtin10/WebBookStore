@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Sửa mã <%= coupon.code %> - Admin</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <% 
+        let expInput = '';
+        if (coupon.expiration_date) {
+            const d = coupon.expiration_date;
+            expInput = (d instanceof Date) ? d.toISOString().slice(0, 10) : String(d).slice(0, 10);
+        }
+    %>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../partials/menu') %>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-edit me-2"></i> SỬA MÃ: <%= coupon.code %></h1>
+                    <div class="d-flex align-items-center">
+                        <a href="/admin/coupons" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-arrow-left me-1"></i> Quay lại</a>
+                        <%- include('../partials/account_dropdown') %>
+                    </div>
+                </div>
+
+                <div class="container pb-5">
+                    <div class="card p-4">
+                        <form action="/admin/coupons/edit/<%= coupon.id %>" method="POST">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mã <span class="text-danger">*</span></label>
+                                    <input type="text" name="code" class="form-control text-uppercase" value="<%= coupon.code %>" required maxlength="50">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Loại áp dụng</label>
+                                    <select name="type" class="form-select">
+                                        <option value="product" <%= coupon.type === 'product' ? 'selected' : '' %>>Giảm giá đơn (sản phẩm)</option>
+                                        <option value="shipping" <%= coupon.type === 'shipping' ? 'selected' : '' %>>Giảm phí vận chuyển</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Kiểu giảm</label>
+                                    <select name="discount_type" class="form-select" id="discTypeSel">
+                                        <option value="percent" <%= coupon.discount_type === 'percent' ? 'selected' : '' %>>Phần trăm (%)</option>
+                                        <option value="fixed" <%= coupon.discount_type === 'fixed' ? 'selected' : '' %>>Số tiền cố định (đ)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Giá trị giảm</label>
+                                    <input type="number" name="discount_value" class="form-control" min="1" step="1" value="<%= coupon.discount_value %>" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Giảm tối đa (đ)</label>
+                                    <input type="number" name="max_discount_amount" class="form-control" min="0" step="1000" value="<%= coupon.max_discount_amount %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Đơn tối thiểu (đ)</label>
+                                    <input type="number" name="min_order_value" class="form-control" min="0" step="1000" value="<%= coupon.min_order_value %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Giới hạn lượt dùng</label>
+                                    <input type="number" name="usage_limit" class="form-control" min="1" step="1" value="<%= coupon.usage_limit %>">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Đã sử dụng</label>
+                                    <input type="text" class="form-control" value="<%= coupon.used_count %>" readonly disabled>
+                                    <div class="form-text">Chỉ đọc (cập nhật khi có đơn dùng mã).</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Ngày hết hạn</label>
+                                    <input type="date" name="expiration_date" class="form-control" value="<%= expInput %>">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_active" value="1" id="act" <%= coupon.is_active == 1 ? 'checked' : '' %>>
+                                        <label class="form-check-label fw-bold" for="act">Đang kích hoạt</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="submit" class="btn btn-primary fw-bold"><i class="fas fa-save"></i> Cập nhật</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

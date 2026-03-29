@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm mã giảm giá - Admin</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../partials/menu') %>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-plus-circle me-2"></i> THÊM MÃ GIẢM GIÁ</h1>
+                    <div class="d-flex align-items-center">
+                        <a href="/admin/coupons" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-arrow-left me-1"></i> Quay lại</a>
+                        <%- include('../partials/account_dropdown') %>
+                    </div>
+                </div>
+
+                <div class="container pb-5">
+                    <div class="card p-4">
+                        <form action="/admin/coupons/add" method="POST">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Mã <span class="text-danger">*</span></label>
+                                    <input type="text" name="code" class="form-control text-uppercase" placeholder="VD: BOOK2026" required maxlength="50" autocomplete="off">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Loại áp dụng</label>
+                                    <select name="type" class="form-select" id="typeSel">
+                                        <option value="product">Giảm giá đơn (sản phẩm)</option>
+                                        <option value="shipping">Giảm phí vận chuyển</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-bold">Kiểu giảm</label>
+                                    <select name="discount_type" class="form-select" id="discTypeSel">
+                                        <option value="percent">Phần trăm (%)</option>
+                                        <option value="fixed">Số tiền cố định (đ)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Giá trị giảm <span class="text-danger">*</span></label>
+                                    <input type="number" name="discount_value" class="form-control" min="1" step="1" value="10" required>
+                                    <div class="form-text" id="discHint">% hoặc VNĐ tùy kiểu giảm.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Giảm tối đa (đ)</label>
+                                    <input type="number" name="max_discount_amount" class="form-control" min="0" step="1000" value="0">
+                                    <div class="form-text">Chỉ dùng khi kiểu là %. Đặt 0 = không giới hạn thêm.</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Đơn tối thiểu (đ)</label>
+                                    <input type="number" name="min_order_value" class="form-control" min="0" step="1000" value="0">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Giới hạn lượt dùng</label>
+                                    <input type="number" name="usage_limit" class="form-control" min="1" step="1" value="100">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Ngày hết hạn</label>
+                                    <input type="date" name="expiration_date" class="form-control">
+                                    <div class="form-text">Để trống = không hết hạn theo ngày.</div>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="is_active" value="1" id="act" checked>
+                                        <label class="form-check-label fw-bold" for="act">Đang kích hoạt</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end mt-4">
+                                <button type="submit" class="btn btn-success fw-bold"><i class="fas fa-save"></i> Lưu mã</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script>
+        (function() {
+            function hint() {
+                var t = document.getElementById('discTypeSel').value;
+                document.getElementById('discHint').textContent = t === 'percent'
+                    ? 'Nhập phần trăm (1–100).'
+                    : 'Nhập số tiền giảm (VNĐ).';
+            }
+            document.getElementById('discTypeSel').addEventListener('change', hint);
+            hint();
+        })();
+    </script>
+</body>
+</html>
