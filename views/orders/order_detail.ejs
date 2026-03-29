@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Chi tiết đơn hàng #<%= order.id %> - Bookstore</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+<body class="order-detail-page order-history-page">
+    <%- include('../partials/menu') %>
+
+    <% const statusLabels = typeof OrderStatusLabels !== 'undefined' ? OrderStatusLabels : {}; %>
+    <% const statusText = statusLabels[order.status] || order.status; %>
+    <% const payLabel = order.payment_status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'; %>
+
+    <div class="main-content">
+        <div class="container">
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb mb-0 small">
+                    <li class="breadcrumb-item"><a href="/orders">Lịch sử đơn hàng</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Đơn #<%= order.id %></li>
+                </ol>
+            </nav>
+
+            <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+                <div>
+                    <h4 class="mb-1 fw-bold text-uppercase"><i class="fas fa-receipt me-2 text-danger"></i> Đơn hàng #<%= order.id %></h4>
+                    <p class="text-muted small mb-0">
+                        Đặt ngày <%= new Date(order.order_date).toLocaleString('vi-VN') %>
+                        <% if (order.tracking_code) { %>
+                            <span class="ms-2 badge bg-info text-dark"><i class="fas fa-truck me-1"></i> <%= order.tracking_code %></span>
+                        <% } %>
+                    </p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <span class="order-status status-<%= order.status %>"><%= statusText %></span>
+                    <a href="/orders" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Danh sách đơn</a>
+                </div>
+            </div>
+
+            <div class="order-card order-detail-card mb-4">
+                <div class="order-body">
+                    <h6 class="fw-bold text-secondary text-uppercase small mb-3">Tiến trình</h6>
+                    <%- include('partials/order_progress_3', { order }) %>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <div class="order-card order-detail-card">
+                        <div class="order-detail-section-title"><i class="fas fa-box-open me-2 text-danger"></i> Sản phẩm</div>
+                        <div class="order-body pt-0">
+                            <% if (items && items.length > 0) { %>
+                                <% items.forEach(item => {
+                                    let imgSrc = item.image_url;
+                                    if (imgSrc && !imgSrc.startsWith('http')) imgSrc = '/images/' + imgSrc;
+                                %>
+                                    <div class="order-item order-detail-item">
+                                        <a href="/product/<%= item.product_id %>" class="order-detail-thumb-link">
+                                            <img src="<%= imgSrc || '/images/default.jpg' %>" class="item-img" alt="" onerror="this.src='https://picsum.photos/60/80'">
+                                        </a>
+                                        <div class="item-info">
+                                            <a href="/product/<%= item.product_id %>" class="item-name text-decoration-none text-dark"><%= item.name %></a>
+                                            <div class="item-meta">Số lượng: <%= item.quantity %></div>
+                                        </div>
+                                        <div class="item-price text-end">
+                                            <div class="small text-muted">Đơn giá</div>
+                                            <div><%= Number(item.price_at_purchase).toLocaleString('vi-VN') %> đ</div>
+                                            <div class="small fw-bold mt-1">Thành tiền: <%= (Number(item.price_at_purchase) * item.quantity).toLocaleString('vi-VN') %> đ</div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <p class="text-muted mb-0">Không có dòng sản phẩm.</p>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="order-card order-detail-card mb-3">
+                        <div class="order-detail-section-title"><i class="fas fa-map-marker-alt me-2 text-danger"></i> Giao hàng & thanh toán</div>
+                        <div class="order-body pt-0">
+                            <dl class="order-detail-dl mb-0">
+                                <dt>Địa chỉ nhận hàng</dt>
+                                <dd><%= order.shipping_address || '—' %></dd>
+                                <dt>Phương thức thanh toán</dt>
+                                <dd><%= order.payment_method || 'COD' %> — <span class="fw-semibold"><%= payLabel %></span></dd>
+                            </dl>
+                        </div>
+                    </div>
+                    <div class="order-card order-detail-card">
+                        <div class="order-detail-section-title"><i class="fas fa-calculator me-2 text-danger"></i> Tổng cộng</div>
+                        <div class="order-body pt-0">
+                            <table class="table table-sm order-detail-totals mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td>Tiền hàng</td>
+                                        <td class="text-end"><%= Number(order.total_money || 0).toLocaleString('vi-VN') %> đ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Phí vận chuyển</td>
+                                        <td class="text-end"><%= Number(order.shipping_fee || 0).toLocaleString('vi-VN') %> đ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Giảm giá</td>
+                                        <td class="text-end text-success">-<%= Number(order.discount_amount || 0).toLocaleString('vi-VN') %> đ</td>
+                                    </tr>
+                                    <tr class="fw-bold border-top">
+                                        <td>Thanh toán</td>
+                                        <td class="text-end text-danger"><%= Number(order.final_total || 0).toLocaleString('vi-VN') %> đ</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

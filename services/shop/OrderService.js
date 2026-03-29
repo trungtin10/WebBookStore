@@ -1,3 +1,4 @@
+const db = require('../../config/dbConfig');
 const OrderRepository = require('../../repositories/shop/OrderRepository');
 const ProductRepository = require('../../repositories/shop/ProductRepository');
 const CouponRepository = require('../../repositories/shop/CouponRepository');
@@ -42,7 +43,7 @@ class OrderService {
             throw new Error(`Đơn hàng phải từ ${Number(coupon.min_order_value)}đ mới được áp dụng mã!`);
         }
 
-        if (coupon.type !== 'product') return 0;
+        if ((coupon.type || '').toLowerCase() !== 'product') return 0;
 
         let discount = coupon.discount_type === 'percent'
             ? (totalAmount * coupon.discount_value) / 100
@@ -69,10 +70,9 @@ class OrderService {
 
         const orderId = await this.orderRepository.createOrder(orderData);
 
-        await Promise.all([
-            ...items.map(item => this.orderRepository.addOrderDetail(orderId, item.id, item.price, item.quantity)),
-            ...items.map(item => this.productRepository.updateStock(item.id, item.quantity))
-        ]);
+        await Promise.all(
+            items.map(item => this.orderRepository.addOrderDetail(orderId, item.id, item.price, item.quantity))
+        );
 
         if (couponCode) await this.couponRepository.updateUsage(couponCode);
         await this.notificationRepository.createNotification(userId, 'Đặt hàng thành công', `Đơn hàng #${orderId} của bạn đã được ghi nhận.`, 'success');
@@ -96,17 +96,102 @@ class OrderService {
         return this.orderRepository.getOrderItems(orderId);
     }
 
-    async createOrderFromCheckout(userId, { items, totalAmount, shippingFee, productDiscount }, shippingAddress, paymentMethod) {
-        await this._validateAndEnrichItems(items);
-        return this._persistOrderAndItems(userId, totalAmount, shippingFee, productDiscount, shippingAddress, paymentMethod, items, null);
+    async createOrderFromCheckout(userId, checkoutData, shippingAddress, paymentMethod) {
+        const { items, shippingFee: feeFromCookie, couponCode } = checkoutData;
+        if (!items?.length) throw new Error('Không có sản phẩm trong đơn hàng');
+
+        const totalAmount = await this._validateAndEnrichItems(items);
+
+        let shippingFee = Number(feeFromCookie);
+        if (!Number.isFinite(shippingFee) || shippingFee < 0) {
+            shippingFee = this._calculateShippingFee(totalAmount);
+        }
+
+        const code = couponCode && String(couponCode).trim() ? String(couponCode).trim() : null;
+        const productDiscount = await this._calculateCouponDiscount(code, totalAmount);
+
+        return this._persistOrderAndItems(userId, totalAmount, shippingFee, productDiscount, shippingAddress, paymentMethod, items, code);
     }
 
     async getOrdersByUserId(userId) {
         return this.orderRepository.getOrdersByUserId(userId);
     }
 
-    async updateOrderStatus(orderId, status) {
-        await this.orderRepository.updateOrderStatus(orderId, status);
+    async updateOrderStatus(orderId, newStatus) {
+        const order = await this.orderRepository.getOrderById(orderId);
+        if (!order) throw new Error('Đơn hàng không tồn tại');
+
+        const oldStatus = order.status;
+        if (oldStatus === newStatus) return;
+
+        const postConfirmStatuses = [
+            OrderStatus.CONFIRMED,
+            OrderStatus.PROCESSING,
+            OrderStatus.SHIPPED,
+            OrderStatus.DELIVERING,
+            OrderStatus.COMPLETED
+        ];
+
+        const deductOnConfirm =
+            oldStatus === OrderStatus.PENDING && newStatus === OrderStatus.CONFIRMED;
+        const restoreOnCancel =
+            newStatus === OrderStatus.CANCELLED && postConfirmStatuses.includes(oldStatus);
+
+        if (!deductOnConfirm && !restoreOnCancel) {
+            await this.orderRepository.updateOrderStatus(orderId, newStatus);
+        } else {
+            const items = await this.orderRepository.getOrderItems(orderId);
+            const conn = await db.getConnection();
+            await conn.beginTransaction();
+            try {
+                if (deductOnConfirm) {
+                    for (const item of items) {
+                        const pid = item.product_id;
+                        const qty = item.quantity;
+                        const n = await this.productRepository.decrementStockOnOrderConfirm(pid, qty, conn);
+                        if (n === 0) {
+                            throw new Error(
+                                `Không đủ tồn kho để xác nhận đơn (sản phẩm: ${item.name || '#' + pid}).`
+                            );
+                        }
+                    }
+                } else if (restoreOnCancel) {
+                    for (const item of items) {
+                        await this.productRepository.restoreStockOnOrderCancel(item.product_id, item.quantity, conn);
+                    }
+                }
+
+                await conn.query('UPDATE orders SET status = ? WHERE id = ?', [newStatus, orderId]);
+                await conn.commit();
+            } catch (e) {
+                await conn.rollback();
+                throw e;
+            } finally {
+                conn.release();
+            }
+        }
+
+        await this._sendOrderStatusEmailIfPossible(order, newStatus);
+    }
+
+    async _sendOrderStatusEmailIfPossible(order, newStatus) {
+        try {
+            const to = order?.email;
+            if (!to || typeof to !== 'string' || !to.trim().includes('@')) return;
+
+            const MailerService = require('../../utils/mailer');
+            const { OrderStatusLabels } = require('../../constants');
+            const mailer = new MailerService();
+            const statusLabel = OrderStatusLabels[newStatus] || newStatus;
+
+            await mailer.sendOrderStatusEmail(to.trim(), {
+                orderId: order.id,
+                customerName: order.full_name,
+                statusLabel
+            });
+        } catch (e) {
+            console.error('Gửi email cập nhật đơn hàng thất bại:', e.message || e);
+        }
     }
 
     // ===== Admin features (proxy to AdminOrderService) =====

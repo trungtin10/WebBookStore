@@ -252,6 +252,10 @@
                                     <label class="form-label">Kích thước bao bì</label>
                                     <input type="text" name="dimensions" class="form-control" placeholder="VD: 13 x 20 cm">
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Màu sắc / bìa</label>
+                                    <input type="text" name="color" class="form-control" placeholder="VD: Xanh lá, Vàng">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -269,6 +273,14 @@
                                     <input type="number" name="price" class="form-control fw-bold text-danger" placeholder="0" required min="0">
                                     <span class="input-group-text">₫</span>
                                 </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Giá niêm yết (VNĐ)</label>
+                                <div class="input-group">
+                                    <input type="number" name="list_price" class="form-control" placeholder="Để trống nếu không khuyến mãi" min="0">
+                                    <span class="input-group-text">₫</span>
+                                </div>
+                                <div class="form-text">Nhập giá cao hơn giá bán để hiển thị nhãn giảm giá trên cửa hàng.</div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Số lượng nhập <span class="text-danger">*</span></label>
@@ -297,6 +309,11 @@
                                 </div>
                             </div>
                             <input type="file" name="image" id="fileInput" class="d-none" accept="image/*" onchange="previewFile()">
+                            <div class="text-start mt-3">
+                                <label class="form-label">Ảnh phụ (gallery)</label>
+                                <textarea name="gallery_images" class="form-control font-monospace small" rows="4" placeholder="Mỗi dòng một tên file đã upload vào /public/images/ (sau khi thêm ảnh chính)"></textarea>
+                                <div class="form-text">Có thể bổ sung sau khi tạo sản phẩm.</div>
+                            </div>
                         </div>
                     </div>
 

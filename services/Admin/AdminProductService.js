@@ -31,6 +31,10 @@ class AdminProductService {
         return this.adminProductRepository.deleteProduct(id);
     }
 
+    async restoreProduct(id) {
+        return this.adminProductRepository.restoreProduct(id);
+    }
+
     async importStock(id, quantityImport, note) {
         return this.adminProductRepository.importStock(id, quantityImport, note);
     }

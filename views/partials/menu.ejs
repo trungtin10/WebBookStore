@@ -206,68 +206,91 @@
 </div>
 
 <!-- Modals (Login/Register) -->
-<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true" aria-labelledby="loginModalTitle">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable auth-modal-dialog">
         <div class="modal-content">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header border-0 pb-0">
+                <h3 class="modal-title visually-hidden" id="loginModalTitle">Đăng nhập</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
-            <div class="modal-body px-5 pb-5">
-                <h3 class="text-center fw-bold mb-4" style="color: #1a1a2e;">ĐĂNG NHẬP</h3>
+            <div class="modal-body pb-4 pb-md-5 pt-0">
+                <h3 class="text-center fw-bold mb-3 mb-md-4" style="color: #1a1a2e;">ĐĂNG NHẬP</h3>
                 <div id="loginAlert" class="alert d-none" role="alert"></div>
-                <form action="/login" method="POST" autocomplete="off">
+                <form action="/login" method="POST" autocomplete="off" data-auth-form="login">
                     <input type="hidden" name="returnUrl" value="">
-                    <div class="mb-3">
-                        <label class="form-label">Tên đăng nhập</label>
-                        <input type="text" class="form-control" name="username" id="loginUsername" required>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="loginUsername">Tên đăng nhập</label>
+                        <input type="text" class="form-control" name="username" id="loginUsername" autocomplete="username" autocapitalize="off">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                     </div>
-                    <div class="mb-4">
-                        <label class="form-label">Mật khẩu</label>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="loginPassword">Mật khẩu</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" name="password" required>
-                            <span class="input-group-text toggle-password"><i class="fas fa-eye"></i></span>
+                            <input type="password" class="form-control" name="password" id="loginPassword" autocomplete="current-password">
+                            <button type="button" class="btn btn-outline-secondary toggle-password" aria-label="Hiển thị mật khẩu" aria-pressed="false">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                         <div class="text-end mt-1">
                             <a href="/forgot-password" class="text-decoration-none small text-muted">Quên mật khẩu?</a>
                         </div>
                     </div>
                     <div class="d-grid">
-                        <button type="submit" class="btn text-white fw-bold" style="background-color: #1a1a2e;">Đăng nhập</button>
+                        <button type="submit" class="btn text-white fw-bold py-2" style="background-color: #1a1a2e;">Đăng nhập</button>
                     </div>
                 </form>
                 <div class="text-center mt-3">
-                    <p class="small">Chưa có tài khoản? <a href="javascript:void(0)" class="text-decoration-none" style="color: #c49b63;" id="switchToRegister">Đăng ký ngay</a></p>
+                    <p class="small mb-0">Chưa có tài khoản? <a href="javascript:void(0)" class="text-decoration-none" style="color: #c49b63;" id="switchToRegister">Đăng ký ngay</a></p>
+                    <p class="small mt-2 mb-0"><a href="/login" class="text-muted">Mở trang đăng nhập đầy đủ</a></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+<div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true" aria-labelledby="registerModalTitle">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable auth-modal-dialog">
         <div class="modal-content">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header border-0 pb-0">
+                <h3 class="modal-title visually-hidden" id="registerModalTitle">Đăng ký</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
             </div>
-            <div class="modal-body px-5 pb-5">
-                <h3 class="text-center fw-bold mb-4" style="color: #1a1a2e;">ĐĂNG KÝ</h3>
+            <div class="modal-body pb-4 pb-md-5 pt-0">
+                <h3 class="text-center fw-bold mb-3 mb-md-4" style="color: #1a1a2e;">ĐĂNG KÝ</h3>
                 <div id="registerAlert" class="alert alert-danger d-none" role="alert"></div>
-                <form action="/register" method="POST" autocomplete="off">
-                    <div class="mb-3"><label class="form-label">Họ và tên</label><input type="text" class="form-control" name="full_name" required></div>
-                    <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
-                    <div class="mb-3"><label class="form-label">Tên đăng nhập</label><input type="text" class="form-control" name="username" required></div>
-                    <div class="mb-4">
-                        <label class="form-label">Mật khẩu</label>
+                <form action="/register" method="POST" autocomplete="off" data-auth-form="register">
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regFullName">Họ và tên</label>
+                        <input type="text" class="form-control" name="full_name" id="regFullName" autocomplete="name">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regEmail">Email</label>
+                        <input type="text" class="form-control" name="email" id="regEmail" autocomplete="email" inputmode="email">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regUsername">Tên đăng nhập</label>
+                        <input type="text" class="form-control" name="username" id="regUsername" autocomplete="username" autocapitalize="off">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regPassword">Mật khẩu</label>
                         <div class="input-group">
-                            <input type="password" class="form-control" name="password" required>
-                            <span class="input-group-text toggle-password"><i class="fas fa-eye"></i></span>
+                            <input type="password" class="form-control" name="password" id="regPassword" autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary toggle-password" aria-label="Hiển thị mật khẩu" aria-pressed="false">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </button>
                         </div>
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                     </div>
                     <input type="hidden" name="role" value="user">
-                    <div class="d-grid"><button type="submit" class="btn text-white fw-bold" style="background-color: #1a1a2e;">Đăng ký</button></div>
+                    <div class="d-grid"><button type="submit" class="btn text-white fw-bold py-2" style="background-color: #1a1a2e;">Đăng ký</button></div>
                 </form>
                 <div class="text-center mt-3">
-                    <p class="small">Đã có tài khoản? <a href="javascript:void(0)" class="text-decoration-none" style="color: #c49b63;" id="switchToLogin">Đăng nhập ngay</a></p>
+                    <p class="small mb-0">Đã có tài khoản? <a href="javascript:void(0)" class="text-decoration-none" style="color: #c49b63;" id="switchToLogin">Đăng nhập ngay</a></p>
+                    <p class="small mt-2 mb-0"><a href="/register" class="text-muted">Mở trang đăng ký đầy đủ</a></p>
                 </div>
             </div>
         </div>
@@ -275,6 +298,8 @@
 </div>
 
 <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/js/auth-forms.js"></script>
+<script src="/js/cart-client.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -406,14 +431,18 @@
             });
         });
 
-        // Xử lý thông báo Login và điền lại username
-        if (urlParams.has('loginError')) {
+        function shouldOpenQueryAuthModal() {
+            const p = (window.location.pathname || '/').replace(/\/$/, '') || '/';
+            return p !== '/login' && p !== '/register';
+        }
+
+        // Thông báo từ query: chỉ mở modal khi không đang ở trang đăng nhập/đăng ký riêng
+        if (shouldOpenQueryAuthModal() && urlParams.has('loginError')) {
             const alertBox = document.getElementById('loginAlert');
             alertBox.textContent = urlParams.get('loginError');
             alertBox.classList.remove('d-none', 'alert-success');
             alertBox.classList.add('alert-danger');
 
-            // Điền lại username nếu có
             if (urlParams.has('username')) {
                 document.getElementById('loginUsername').value = urlParams.get('username');
             }
@@ -421,7 +450,7 @@
             loginModal.show();
         }
 
-        if (urlParams.has('registerError')) {
+        if (shouldOpenQueryAuthModal() && urlParams.has('registerError')) {
             const alertBox = document.getElementById('registerAlert');
             alertBox.textContent = urlParams.get('registerError');
             alertBox.classList.remove('d-none', 'alert-success');
@@ -429,7 +458,7 @@
             registerModal.show();
         }
 
-        if (urlParams.has('registerSuccess')) {
+        if (shouldOpenQueryAuthModal() && urlParams.has('registerSuccess')) {
             const alertBox = document.getElementById('loginAlert');
             alertBox.textContent = urlParams.get('registerSuccess');
             alertBox.classList.remove('d-none', 'alert-danger');
@@ -449,41 +478,38 @@
             clearParams();
         }
 
-        document.querySelectorAll('.toggle-password').forEach(span => {
-            span.addEventListener('click', function() {
-                const input = this.parentElement.querySelector('input');
-                const icon = this.querySelector('i');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                    icon.classList.replace('fa-eye', 'fa-eye-slash');
-                } else {
-                    input.type = 'password';
-                    icon.classList.replace('fa-eye-slash', 'fa-eye');
-                }
-            });
-        });
+        if (window.updateCartDropdown) {
+            window.updateCartDropdown();
+        }
     });
 
     // Hàm global để cập nhật dropdown giỏ hàng từ trang bất kỳ (ajax)
     window.updateCartDropdown = function() {
-        fetch('/api/cart-data') // Cần tạo thêm route này
+        fetch('/cart-data')
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
                     const badge = document.getElementById('cartBadgeCount');
                     const dropdownContent = document.getElementById('cartDropdownContent');
+                    const totalQty = typeof data.totalQty === 'number' ? data.totalQty : (data.cart || []).reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+                    const lineCount = (data.cart || []).length;
 
-                    // 1. Cập nhật Badge
-                    const count = data.cart.length;
-                    if (count > 0) {
-                        badge.textContent = count > 99 ? '99+' : count;
-                        badge.style.display = 'block';
-                    } else {
-                        badge.style.display = 'none';
+                    if (window.booktotalCartMirror) {
+                        window.booktotalCartMirror.save(data.cart || [], totalQty);
+                    }
+
+                    // 1. Badge = tổng số lượng sản phẩm (mọi dòng)
+                    if (badge) {
+                        if (totalQty > 0) {
+                            badge.textContent = totalQty > 99 ? '99+' : String(totalQty);
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
                     }
 
                     // 2. Cập nhật Dropdown
-                    if (count > 0) {
+                    if (lineCount > 0) {
                         let html = '<div class="cart-list" id="cartDropdownList">';
                         data.cart.slice(0, 5).forEach(item => {
                             let imgSrc = item.image_url;
@@ -515,13 +541,19 @@
                             </div>`;
                         dropdownContent.innerHTML = html;
                     } else {
-                        dropdownContent.innerHTML = `
+                        if (window.booktotalCartMirror) {
+                            window.booktotalCartMirror.save([], 0);
+                        }
+                        if (dropdownContent) {
+                            dropdownContent.innerHTML = `
                             <div class="text-center py-5">
                                 <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
                                 <p class="text-muted small mb-0">Giỏ hàng trống</p>
                             </div>`;
+                        }
                     }
                 }
-            });
+            })
+            .catch(function () { /* giữ UI hiện tại */ });
     };
 </script>

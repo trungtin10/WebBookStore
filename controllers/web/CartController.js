@@ -35,7 +35,13 @@ class CartController {
 
             const cookieName = res.locals.user ? `cart_${res.locals.user.id}` : 'cart_guest';
             res.cookie(cookieName, JSON.stringify(result.cart), { maxAge: 24 * 60 * 60 * 1000, path: '/' });
-            res.json({ success: true, message: "Thêm vào giỏ hàng thành công!", totalQty: result.cart.length });
+            const { totalQty } = this.cartService.getCartSummary(result.cart);
+            res.json({
+                success: true,
+                message: 'Thêm vào giỏ hàng thành công!',
+                cart: result.cart,
+                totalQty
+            });
         } catch (err) {
             console.error(err);
             res.status(500).json({ success: false, message: "Lỗi server" });
@@ -43,15 +49,43 @@ class CartController {
     }
 
     async updateCart(req, res) {
+        const action = req.query.action;
+        const wantJson = req.query.format === 'json' || (req.get('Accept') || '').includes('application/json');
+
+        if (action !== 'increase' && action !== 'decrease') {
+            if (wantJson) {
+                return res.status(400).json({ success: false, message: 'Thao tác không hợp lệ' });
+            }
+            return res.redirect('/cart?error=' + encodeURIComponent('Thao tác không hợp lệ'));
+        }
+
         let cart = req.cart || [];
-        const result = await this.cartService.updateCart(cart, req.params.id, req.query.action);
+        const result = await this.cartService.updateCart(cart, req.params.id, action);
+
+        const cookieName = res.locals.user ? `cart_${res.locals.user.id}` : 'cart_guest';
+        res.cookie(cookieName, JSON.stringify(result.cart), { maxAge: 24 * 60 * 60 * 1000, path: '/' });
+        const { totalQty } = this.cartService.getCartSummary(result.cart);
+
+        if (wantJson) {
+            if (result.error) {
+                return res.status(400).json({
+                    success: false,
+                    message: result.error,
+                    cart: await this.cartService.enrichCartLines(result.cart),
+                    totalQty
+                });
+            }
+            return res.json({
+                success: true,
+                cart: await this.cartService.enrichCartLines(result.cart),
+                totalQty
+            });
+        }
 
         if (result.error) {
             return res.redirect('/cart?error=' + encodeURIComponent(result.error));
         }
 
-        const cookieName = res.locals.user ? `cart_${res.locals.user.id}` : 'cart_guest';
-        res.cookie(cookieName, JSON.stringify(result.cart), { maxAge: 24 * 60 * 60 * 1000, path: '/' });
         res.redirect('/cart');
     }
 
@@ -64,10 +98,16 @@ class CartController {
         res.redirect('/cart');
     }
 
-    getCartData(req, res) {
-        const cart = req.cart || [];
-        const { totalQty } = this.cartService.getCartSummary(cart);
-        res.json({ success: true, cart, totalQty });
+    async getCartData(req, res) {
+        try {
+            const cart = req.cart || [];
+            const enriched = await this.cartService.enrichCartLines(cart);
+            const { totalQty } = this.cartService.getCartSummary(cart);
+            res.json({ success: true, cart: enriched, totalQty });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: 'Lỗi server' });
+        }
     }
 }
 

@@ -16,18 +16,71 @@ class AdminUserController {
         this.router.get('/edit/:id', requireAdmin, this.getEditForm.bind(this));
         this.router.post('/edit/:id', requireAdmin, this.processEdit.bind(this));
         this.router.get('/delete/:id', requireAdmin, this.deleteUser.bind(this));
+        this.router.get('/toggle-active/:id', requireAdmin, this.toggleUserActive.bind(this));
     }
 
     async getList(req, res) {
         try {
-            const users = await this.userService.getAllUsers();
+            const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+            const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+            const pageSize = 10;
+            const total = await this.userService.countUsers(q);
+            const users = await this.userService.getUsersPaginated({ page, pageSize, search: q });
+            const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+
             res.render('admin/user/user_list', {
                 users,
+                q,
+                page,
+                pageSize,
+                total,
+                totalPages,
                 error: req.query.error,
                 success: req.query.success
             });
         } catch (err) {
+            console.error(err);
             res.status(500).send("Lỗi lấy danh sách user");
+        }
+    }
+
+    async toggleUserActive(req, res) {
+        try {
+            const id = parseInt(req.params.id, 10);
+            if (!Number.isFinite(id)) {
+                return res.redirect('/admin/user?error=' + encodeURIComponent('Mã người dùng không hợp lệ'));
+            }
+            if (res.locals.user && Number(res.locals.user.id) === id) {
+                return res.redirect('/admin/user?error=' + encodeURIComponent('Bạn không thể khóa/mở tài khoản của chính mình.'));
+            }
+
+            const userRow = await this.userService.getUserById(id);
+            if (!userRow) {
+                return res.redirect('/admin/user?error=' + encodeURIComponent('Không tìm thấy người dùng.'));
+            }
+
+            const role = (userRow.role || '').trim().toLowerCase();
+            if (role === 'admin') {
+                return res.redirect('/admin/user?error=' + encodeURIComponent('Không thể khóa tài khoản quản trị viên.'));
+            }
+
+            const currentlyActive = Number(userRow.is_active) !== 0;
+            await this.userService.setUserActive(id, !currentlyActive);
+            const msg = currentlyActive ? 'Đã khóa tài khoản.' : 'Đã mở khóa tài khoản.';
+            const page = parseInt(req.query.page, 10) || 1;
+            const q = typeof req.query.q === 'string' ? req.query.q : '';
+            const qs = new URLSearchParams();
+            if (page > 1) qs.set('page', String(page));
+            if (q) qs.set('q', q);
+            qs.set('success', msg);
+            res.redirect('/admin/user?' + qs.toString());
+        } catch (err) {
+            console.error(err);
+            const msg =
+                err && err.code === 'SCHEMA_MISSING_IS_ACTIVE'
+                    ? err.message
+                    : 'Lỗi khi cập nhật trạng thái tài khoản.';
+            res.redirect('/admin/user?error=' + encodeURIComponent(msg));
         }
     }
 

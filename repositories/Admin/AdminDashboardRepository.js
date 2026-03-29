@@ -1,4 +1,5 @@
 const db = require('../../config/dbConfig');
+const { Stock } = require('../../constants');
 
 class AdminDashboardRepository {
     async getTotalRevenue() {
@@ -17,7 +18,10 @@ class AdminDashboardRepository {
     }
 
     async getLowStockCount() {
-        const [rows] = await db.query("SELECT COUNT(*) as count FROM products WHERE quantity < 10");
+        const [rows] = await db.query(
+            `SELECT COUNT(*) as count FROM products WHERE quantity > 0 AND quantity < ? AND (deleted_at IS NULL)`,
+            [Stock.LOW_THRESHOLD]
+        );
         return rows[0].count || 0;
     }
 

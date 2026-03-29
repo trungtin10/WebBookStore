@@ -13,16 +13,22 @@ class UserRepository {
     }
 
     async updateUser(id, userData) {
-        let query = 'UPDATE users SET email = ?, full_name = ?, role = ? WHERE id = ?';
-        let params = [userData.email, userData.full_name, userData.role, id];
+        const phone = userData.phone != null ? String(userData.phone).trim() : null;
+        const address = userData.address != null ? String(userData.address).trim() : null;
 
         if (userData.password && userData.password.trim() !== '') {
             const hashedPassword = await bcrypt.hash(userData.password, 10);
-            query = 'UPDATE users SET email = ?, full_name = ?, role = ?, password = ? WHERE id = ?';
-            params = [userData.email, userData.full_name, userData.role, hashedPassword, id];
+            await db.query(
+                'UPDATE users SET email = ?, full_name = ?, role = ?, phone = ?, address = ?, password = ? WHERE id = ?',
+                [userData.email, userData.full_name, userData.role, phone || null, address || null, hashedPassword, id]
+            );
+            return;
         }
 
-        await db.query(query, params);
+        await db.query(
+            'UPDATE users SET email = ?, full_name = ?, role = ?, phone = ?, address = ? WHERE id = ?',
+            [userData.email, userData.full_name, userData.role, phone || null, address || null, id]
+        );
     }
 
     async getUserByEmail(email) {
@@ -37,14 +43,27 @@ class UserRepository {
         await db.query(query, [user.username, hashedPassword, user.email, user.full_name, role]);
     }
 
+    async isUserActive(id) {
+        try {
+            const [rows] = await db.query('SELECT is_active FROM users WHERE id = ?', [id]);
+            if (!rows.length) return false;
+            return Number(rows[0].is_active) !== 0;
+        } catch (e) {
+            if (e && e.code === 'ER_BAD_FIELD_ERROR' && String(e.message || '').includes('is_active')) {
+                return true;
+            }
+            throw e;
+        }
+    }
+
     async login(username, password) {
         const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
         const user = rows.find(u => u.username.toLowerCase() === (username || '').toLowerCase());
-        if (user) {
-            const match = await bcrypt.compare(password, user.password);
-            if (match) return user;
-        }
-        return null;
+        if (!user) return null;
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return null;
+        if (Number(user.is_active) === 0) return { locked: true };
+        return user;
     }
 
     async saveResetToken(email, token, expiry) {

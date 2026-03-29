@@ -1,4 +1,4 @@
-const CACHE_NAME = 'booktotal-v1';
+const CACHE_NAME = 'booktotal-v2';
 const STATIC_CACHE = [
   '/',
   '/manifest.json',
@@ -27,6 +27,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   if (event.request.url.includes('/api/')) return;
+
+  let path = '';
+  try {
+    path = new URL(event.request.url).pathname;
+  } catch (e) {
+    /* ignore */
+  }
+  // Giỏ hàng theo cookie — không được trả từ cache (sẽ luôn thấy giỏ rỗng dù đã thêm SP)
+  if (path === '/cart-data') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   // Never cache HTML pages with user-specific state (login/cart/notifications)
   // to avoid serving stale anonymous pages after login.

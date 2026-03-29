@@ -1,0 +1,54 @@
+<% 
+    let pFill = '8%';
+    let c1 = 'current';
+    let c2 = 'upcoming';
+    let c3 = 'upcoming';
+    switch (order.status) {
+        case 'CONFIRMED':
+        case 'PROCESSING':
+            pFill = '36%';
+            c1 = 'done';
+            c2 = 'upcoming';
+            c3 = 'upcoming';
+            break;
+        case 'SHIPPED':
+        case 'DELIVERING':
+            pFill = '64%';
+            c1 = 'done';
+            c2 = 'current';
+            c3 = 'upcoming';
+            break;
+        case 'COMPLETED':
+            pFill = '100%';
+            c1 = 'done';
+            c2 = 'done';
+            c3 = 'done';
+            break;
+        case 'CANCELLED':
+            break;
+        default:
+            break;
+    }
+%>
+<% if (order.status !== 'CANCELLED') { %>
+    <div class="progress-track progress-track--3" data-role="order-progress">
+        <div class="progress-line"><div class="progress-line-fill" data-role="progress-fill" style="width: <%= pFill %>;"></div></div>
+
+        <div class="progress-step progress-step--1 <%= c1 %>" data-step="1" data-role="step-1">
+            <div class="step-icon"><i class="fas fa-clipboard-check"></i></div>
+            <span class="step-label">Chờ duyệt</span>
+        </div>
+        <div class="progress-step progress-step--2 <%= c2 %>" data-step="2" data-role="step-2">
+            <div class="step-icon"><i class="fas fa-truck"></i></div>
+            <span class="step-label">Đang giao</span>
+        </div>
+        <div class="progress-step progress-step--3 <%= c3 %>" data-step="3" data-role="step-3">
+            <div class="step-icon"><i class="fas fa-circle-check"></i></div>
+            <span class="step-label">Đã giao</span>
+        </div>
+    </div>
+<% } else { %>
+    <div class="order-cancelled-note">
+        <i class="fas fa-ban me-2"></i> Đơn hàng này đã bị hủy.
+    </div>
+<% } %>

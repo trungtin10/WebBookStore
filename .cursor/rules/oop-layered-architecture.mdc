@@ -1,0 +1,49 @@
+---
+description: WebBookStore — hướng OOP, phân lớp MVC; tránh logic tuần tự/spaghetti trong controller
+globs: "**/*.{js,ejs}"
+alwaysApply: true
+---
+
+# Kiến trúc OOP & phân lớp (WebBookStore)
+
+## Mục tiêu
+
+- Code theo **hướng đối tượng & phân trách nhiệm**, không viết kiểu **tuần tự một dòng** (một hàm khổng lồ, toàn bộ nghiệp vụ nối tiếp nhau trong cùng một chỗ).
+- Giữ **Controller mỏng**, **Service giàu nghiệp vụ**, **Repository chỉ truy cập dữ liệu**.
+
+## Các lớp (layers)
+
+| Lớp | Trách nhiệm | Không làm |
+|-----|-------------|-----------|
+| **Controller** (`controllers/`) | Nhận `req`/`res`, validate đầu vào tối thiểu, gọi **một** service phù hợp, trả view/JSON/redirect | Không gọi `db.query` trực tiếp; không nhồi 50+ dòng nghiệp vụ tuần tự |
+| **Service** (`services/`) | Quy tắc nghiệp vụ, gọi một hoặc nhiều repository, xử lý lỗi nghiệp vụ | Không render EJS; không biết chi tiết HTTP header ngoài dữ liệu trả về |
+| **Repository** (`repositories/`) | SQL / truy cập DB, mapping hàng → object | Không chứa logic “đặt hàng”, “giảm giá” mang tính nghiệp vụ sản phẩm |
+
+## OOP trong Node (CommonJS)
+
+- **Mỗi controller** là `class`, khởi tạo `express.Router()` trong constructor hoặc field; handler là **method** gắn với class (`this.wrap`, `bind` khi cần).
+- **Dependency injection**: service/repository truyền qua **constructor** (hoặc default `new X()`), để dễ test và thay thế.
+  ```js
+  class FooController {
+    constructor(fooService = null) {
+      this.fooService = fooService || new FooService();
+    }
+  }
+  ```
+- Tách logic dài trong service thành **method riêng** (private theo quy ước `_tinhTong()` hoặc method `#` nếu dùng private field JS), **không** xếp hàng trăm dòng trong một `async processOrder()`.
+
+## Tránh (anti-pattern “tuần tự”)
+
+- Một method public dài vài trăm dòng: tách bước thành các **hành vi** (method) có tên rõ.
+- Lặp lại cùng đoạn xử lý ở nhiều controller: đưa vào **service** hoặc **helper** có tên domain.
+- **EJS**: chỉ hiển thị / gọi API nhẹ; không nhét toàn bộ nghiệp vụ vào `<% %>` dài.
+
+## Phù hợp với codebase hiện tại
+
+- Giữ pattern: `BaseApiController` + `wrap`, `ApiResponse`, các `*Service` / `*Repository` dạng class.
+- File mới: **ưu tiên class + phân lớp**; chỉ dùng `function` độc lập cho **pure utility** nhỏ (`utils/`).
+
+## Khi refactor code cũ
+
+- Ưu tiên **tách method** và **đưa xuống đúng lớp** thay vì copy-paste.
+- Không mở rộng phạm vi refactor ngoài phần user yêu cầu (tránh PR khổng lồ).

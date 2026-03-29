@@ -24,7 +24,7 @@ class AppMiddleware {
         }
         req.cart = cart;
         res.locals.cart = cart;
-        res.locals.cartCount = cart.length;
+        res.locals.cartCount = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
         next();
     }
 

@@ -109,19 +109,21 @@
                     <%- include('../partials/account_dropdown') %>
                 </div>
 
-                <!-- Tổng quan Doanh thu và Đơn hàng -->
+                <!-- Tổng quan theo khoảng thời gian báo cáo (đơn hoàn thành) -->
                 <div class="row">
                     <div class="col-lg-6 mb-4">
                         <div class="stat-card bg-success-light p-4 h-100">
                             <div class="icon"><i class="fas fa-dollar-sign"></i></div>
-                            <p class="mb-2 fs-5">Tổng Doanh Thu (Đã Hoàn Thành)</p>
-                            <h3><%= totalRevenue.toLocaleString('vi-VN') %> đ</h3>
+                            <p class="mb-1 fs-5">Tổng doanh thu</p>
+                            <p class="mb-2 small opacity-75">Đơn đã giao (COMPLETED) trong khoảng đã chọn</p>
+                            <h3><%= Number(totalRevenue).toLocaleString('vi-VN') %> đ</h3>
                         </div>
                     </div>
                     <div class="col-lg-6 mb-4">
                         <div class="stat-card bg-info-light p-4 h-100">
                             <div class="icon"><i class="fas fa-shopping-cart"></i></div>
-                            <p class="mb-2 fs-5">Tổng Số Đơn Hàng</p>
+                            <p class="mb-1 fs-5">Tổng số đơn</p>
+                            <p class="mb-2 small opacity-75">Số đơn hoàn thành trong khoảng đã chọn</p>
                             <h3><%= totalOrders %></h3>
                         </div>
                     </div>
@@ -134,25 +136,56 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col"><div class="order-status-box" style="background-color: #fff3cd; color: #664d03;"><strong>Chờ xác nhận</strong><br><%= orderStats.PENDING %></div></div>
-                            <div class="col"><div class="order-status-box" style="background-color: #cfe2ff; color: #084298;"><strong>Đã xác nhận</strong><br><%= orderStats.CONFIRMED %></div></div>
+                            <div class="col"><div class="order-status-box" style="background-color: #fff3cd; color: #664d03;"><strong>Chờ duyệt</strong><br><%= orderStats.PENDING %></div></div>
+                            <div class="col"><div class="order-status-box" style="background-color: #cfe2ff; color: #084298;"><strong>Đã duyệt</strong><br><%= orderStats.CONFIRMED %></div></div>
                             <div class="col"><div class="order-status-box" style="background-color: #cff4fc; color: #055160;"><strong>Đang giao</strong><br><%= orderStats.SHIPPING %></div></div>
-                            <div class="col"><div class="order-status-box" style="background-color: #d1e7dd; color: #0f5132;"><strong>Hoàn thành</strong><br><%= orderStats.COMPLETED %></div></div>
+                            <div class="col"><div class="order-status-box" style="background-color: #d1e7dd; color: #0f5132;"><strong>Đã giao</strong><br><%= orderStats.COMPLETED %></div></div>
                             <div class="col"><div class="order-status-box" style="background-color: #f8d7da; color: #842029;"><strong>Đã hủy</strong><br><%= orderStats.CANCELLED %></div></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Biểu đồ doanh thu -->
+                <!-- Báo cáo doanh thu -->
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title fw-bold mb-0">Doanh Thu 7 Ngày Gần Nhất (Đơn Hoàn Thành)</h5>
+                        <h5 class="card-title fw-bold mb-0"><i class="fas fa-chart-line me-2"></i>Báo cáo doanh thu</h5>
                     </div>
                     <div class="card-body">
+                        <% const rq = typeof reportQuery !== 'undefined' ? reportQuery : { from: '', to: '', group: 'day', chart: 'line' }; %>
+                        <form class="row g-3 align-items-end mb-4" method="GET" action="/admin/stats">
+                            <div class="col-md-2 col-lg-2">
+                                <label class="form-label small fw-bold mb-1">Từ ngày</label>
+                                <input type="date" name="from" class="form-control" value="<%= rq.from %>">
+                            </div>
+                            <div class="col-md-2 col-lg-2">
+                                <label class="form-label small fw-bold mb-1">Đến ngày</label>
+                                <input type="date" name="to" class="form-control" value="<%= rq.to %>">
+                            </div>
+                            <div class="col-md-2 col-lg-2">
+                                <label class="form-label small fw-bold mb-1">Nhóm theo</label>
+                                <select name="group" class="form-select">
+                                    <option value="day" <%= rq.group === 'month' ? '' : 'selected' %>>Theo ngày</option>
+                                    <option value="month" <%= rq.group === 'month' ? 'selected' : '' %>>Theo tháng</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 col-lg-2">
+                                <label class="form-label small fw-bold mb-1">Kiểu biểu đồ</label>
+                                <select name="chart" class="form-select">
+                                    <option value="line" <%= rq.chart === 'bar' ? '' : 'selected' %>>Đường</option>
+                                    <option value="bar" <%= rq.chart === 'bar' ? 'selected' : '' %>>Cột</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 col-lg-4 d-flex flex-wrap gap-2">
+                                <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i> Áp dụng</button>
+                                <a href="/admin/stats" class="btn btn-outline-secondary">Mặc định (30 ngày)</a>
+                            </div>
+                        </form>
                         <% if (data && data.length > 0) { %>
-                            <canvas id="revenueChart"></canvas>
+                            <div style="min-height: 320px;">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
                         <% } else { %>
-                            <p class="text-center text-muted py-5">Chưa có dữ liệu doanh thu để vẽ biểu đồ.</p>
+                            <p class="text-center text-muted py-5 mb-0">Không có đơn hoàn thành trong khoảng thời gian này.</p>
                         <% } %>
                     </div>
                 </div>
@@ -179,12 +212,12 @@
                                     <% if (recentOrders && recentOrders.length > 0) { %>
                                         <%
                                         const statusMap = {
-                                            'PENDING': 'Chờ xác nhận',
-                                            'CONFIRMED': 'Đã xác nhận',
-                                            'PROCESSING': 'Đang xử lý',
-                                            'SHIPPED': 'Đã giao VC',
+                                            'PENDING': 'Chờ duyệt',
+                                            'CONFIRMED': 'Đã duyệt',
+                                            'PROCESSING': 'Chuẩn bị hàng',
+                                            'SHIPPED': 'Đang vận chuyển',
                                             'SHIPPING': 'Đang giao',
-                                            'DELIVERING': 'Đang giao hàng',
+                                            'DELIVERING': 'Đang giao',
                                             'COMPLETED': 'Đã giao',
                                             'CANCELLED': 'Đã hủy'
                                         };
@@ -256,34 +289,46 @@
     <script>
         const labels = <%- JSON.stringify(labels) %>;
         const data = <%- JSON.stringify(data) %>;
+        const orderCountsPerPeriod = <%- JSON.stringify(typeof orderCountsPerPeriod !== 'undefined' ? orderCountsPerPeriod : []) %>;
+        const chartType = <%- JSON.stringify(typeof chartType !== 'undefined' ? chartType : 'line') %>;
 
         if (data && data.length > 0) {
             const ctx = document.getElementById('revenueChart').getContext('2d');
+            const isBar = chartType === 'bar';
             new Chart(ctx, {
-                type: 'line',
+                type: chartType,
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'Doanh thu (VNĐ)',
                         data: data,
                         borderColor: '#28a745',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        fill: true,
-                        tension: 0.4
+                        backgroundColor: isBar ? 'rgba(40, 167, 69, 0.7)' : 'rgba(40, 167, 69, 0.12)',
+                        fill: !isBar,
+                        tension: 0.35
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: { callback: value => value.toLocaleString('vi-VN') + ' đ' }
+                            ticks: { callback: value => Number(value).toLocaleString('vi-VN') + ' đ' }
                         }
                     },
                     plugins: {
                         tooltip: {
                             callbacks: {
-                                label: context => context.parsed.y.toLocaleString('vi-VN') + ' đ'
+                                label: (context) => {
+                                    const v = context.parsed.y;
+                                    return ' Doanh thu: ' + Number(v).toLocaleString('vi-VN') + ' đ';
+                                },
+                                afterLabel: (context) => {
+                                    const n = orderCountsPerPeriod[context.dataIndex];
+                                    if (n != null && n !== undefined) return 'Số đơn: ' + n;
+                                    return '';
+                                }
                             }
                         }
                     }
@@ -322,12 +367,12 @@
                         });
 
                         const statusMap = {
-                            'PENDING': 'Chờ xác nhận',
-                            'CONFIRMED': 'Đã xác nhận',
-                            'PROCESSING': 'Đang xử lý',
-                            'SHIPPED': 'Đã giao VC',
+                            'PENDING': 'Chờ duyệt',
+                            'CONFIRMED': 'Đã duyệt',
+                            'PROCESSING': 'Chuẩn bị hàng',
+                            'SHIPPED': 'Đang vận chuyển',
                             'SHIPPING': 'Đang giao',
-                            'DELIVERING': 'Đang giao hàng',
+                            'DELIVERING': 'Đang giao',
                             'COMPLETED': 'Đã giao',
                             'CANCELLED': 'Đã hủy'
                         };

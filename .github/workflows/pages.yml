@@ -33,7 +33,9 @@ jobs:
           rm -rf public-site
           mkdir -p public-site
 
-          if [ -f "index.html" ]; then
+          if [ -f ".github/pages-index.html" ]; then
+            cp .github/pages-index.html public-site/index.html
+          elif [ -f "index.html" ]; then
             cp index.html public-site/index.html
           elif [ -f "public/index.html" ]; then
             cp public/index.html public-site/index.html

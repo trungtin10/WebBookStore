@@ -8,7 +8,7 @@
             </div>
             <div class="modal-body text-center py-4">
                 <p class="mb-0 fs-5" id="confirmMessage">Bạn có chắc chắn muốn xóa mục này không?</p>
-                <p class="text-muted small mt-2">Hành động này không thể hoàn tác.</p>
+                <p class="text-muted small mt-2" id="confirmSubtext">Hành động này không thể hoàn tác.</p>
             </div>
             <div class="modal-footer border-0 justify-content-center pb-4">
                 <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
@@ -19,13 +19,19 @@
 </div>
 
 <script>
-    function showConfirmModal(url, message) {
+    function showConfirmModal(url, message, subtext) {
         const modalEl = document.getElementById('confirmDeleteModal');
         const btn = document.getElementById('confirmDeleteBtn');
         const msg = document.getElementById('confirmMessage');
+        const sub = document.getElementById('confirmSubtext');
 
         if (message) msg.innerText = message;
         btn.setAttribute('href', url);
+        if (sub) {
+            sub.innerText = subtext !== undefined && subtext !== null && subtext !== ''
+                ? subtext
+                : 'Hành động này không thể hoàn tác.';
+        }
 
         const modal = new bootstrap.Modal(modalEl);
         modal.show();

@@ -34,9 +34,10 @@
                 <!-- CỘT TRÁI -->
                 <div class="col-lg-4 col-md-5">
                     <div class="content-box left-sidebar bg-white p-3 rounded shadow-sm mb-3">
-                        <div class="product-img-box text-center mb-3">
-                            <img id="productImage" src="/images/default.jpg" class="product-img img-fluid rounded" alt="" onerror="this.src='https://picsum.photos/400/600'">
+                        <div class="product-img-box text-center mb-2">
+                            <img id="productImage" src="/images/default.jpg" class="product-img img-fluid rounded product-gallery-main" alt="" onerror="this.src='https://picsum.photos/400/600'">
                         </div>
+                        <div class="product-gallery-thumbs d-flex flex-wrap gap-2 justify-content-center" id="galleryThumbs" aria-label="Ảnh sản phẩm"></div>
 
                         <% if (locals.user && user.role==='admin' ) { %>
                             <div class="admin-mode-badge">
@@ -86,6 +87,11 @@
                             <div class="meta-item"><span class="meta-label">Hình thức bìa:</span><span class="meta-value" id="metaCover">---</span></div>
                         </div>
 
+                        <div class="detail-specs border rounded p-3 mb-3 bg-light">
+                            <h6 class="fw-bold mb-2 small text-uppercase text-muted">Thông tin chi tiết</h6>
+                            <ul class="list-unstyled mb-0 small" id="detailSpecsList"></ul>
+                        </div>
+
                         <div class="rating-summary-top mb-3">
                             <div class="text-warning me-2">
                                 <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -95,8 +101,9 @@
                             <span class="text-muted" id="soldCount">Đã bán 0</span>
                         </div>
 
-                        <div class="price-box my-3">
-                            <span class="current-price h2 text-danger fw-bold me-3" id="productPrice">0 đ</span>
+                        <div class="price-box my-3 d-flex flex-wrap align-items-baseline gap-2">
+                            <span class="text-muted text-decoration-line-through d-none" id="productListPrice"></span>
+                            <span class="current-price h2 text-danger fw-bold" id="productPrice">0 đ</span>
                             <span class="badge bg-success" id="stockBadge"><i class="fas fa-check"></i> Còn hàng</span>
                             <span class="badge bg-secondary d-none" id="outOfStockBadge">Hết hàng</span>
                         </div>
@@ -166,8 +173,9 @@
             </div>
 
             <!-- SẢN PHẨM LIÊN QUAN -->
-            <div id="relatedSection" class="content-box bg-white p-4 rounded shadow-sm mb-4 d-none">
-                <h5 class="fw-bold mb-4 border-bottom pb-2">Sản phẩm liên quan khác</h5>
+            <div id="relatedSection" class="content-box bg-white p-4 rounded shadow-sm mb-4">
+                <h5 class="fw-bold mb-4 border-bottom pb-2">Sản phẩm liên quan</h5>
+                <p id="relatedEmpty" class="text-muted text-center py-3 mb-0 d-none">Chưa có sản phẩm liên quan trong cùng danh mục.</p>
                 <div class="row row-cols-2 row-cols-md-5 g-3" id="relatedGrid"></div>
             </div>
         </div>
@@ -271,6 +279,21 @@
                 const productId = '<%= productId %>';
                 const productIdNum = parseInt(productId, 10);
 
+                function decreaseQty() {
+                    var el = document.getElementById('qtyInput');
+                    if (!el) return;
+                    var v = parseInt(el.value, 10) || 1;
+                    el.value = Math.max(1, v - 1);
+                }
+                function increaseQty() {
+                    var el = document.getElementById('qtyInput');
+                    if (!el) return;
+                    var v = parseInt(el.value, 10) || 1;
+                    var mx = parseInt(el.max, 10);
+                    var cap = Number.isFinite(mx) && mx > 0 ? mx : 9999;
+                    el.value = Math.min(cap, v + 1);
+                }
+
                 Promise.all([
                     fetch('/api/products/' + productId).then(r => r.json()),
                     fetch('/api/products/' + productId + '/related').then(r => r.json()),
@@ -291,23 +314,71 @@
                     document.getElementById('breadcrumbCategory').textContent = product.category_name || 'Sách';
                     document.getElementById('breadcrumbCategory').href = product.category_id ? '/category/' + product.category_id : '#';
                     let imgSrc = (product.image_url && !product.image_url.startsWith('http')) ? '/images/' + product.image_url : (product.image_url || '/images/default.jpg');
-                    document.getElementById('productImage').src = imgSrc;
-                    document.getElementById('productImage').alt = product.name;
+                    const gallery = (product.gallery && product.gallery.length) ? product.gallery : [imgSrc];
+                    const mainImg = document.getElementById('productImage');
+                    mainImg.src = gallery[0];
+                    mainImg.alt = product.name;
+                    const thumbsEl = document.getElementById('galleryThumbs');
+                    function escHtml(s) {
+                        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+                    }
+                    function setGalleryMain(idx) {
+                        mainImg.src = gallery[idx];
+                        thumbsEl.querySelectorAll('.product-gallery-thumb').forEach(function (el, i) {
+                            el.classList.toggle('active', i === idx);
+                        });
+                    }
+                    if (gallery.length > 1) {
+                        thumbsEl.innerHTML = gallery.map(function (url, i) {
+                            return '<img class="product-gallery-thumb' + (i === 0 ? ' active' : '') + '" src="' + escHtml(url) + '" alt="" data-idx="' + i + '" role="button" tabindex="0">';
+                        }).join('');
+                        thumbsEl.querySelectorAll('.product-gallery-thumb').forEach(function (thumb) {
+                            thumb.addEventListener('click', function () {
+                                setGalleryMain(parseInt(thumb.getAttribute('data-idx'), 10));
+                            });
+                            thumb.addEventListener('keydown', function (e) {
+                                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setGalleryMain(parseInt(thumb.getAttribute('data-idx'), 10)); }
+                            });
+                        });
+                    } else {
+                        thumbsEl.innerHTML = '';
+                    }
                     document.getElementById('productName').textContent = product.name;
                     document.getElementById('metaSupplier').textContent = product.supplier_name || 'Đang cập nhật';
                     document.getElementById('metaAuthor').textContent = product.author_name || 'Đang cập nhật';
                     document.getElementById('metaPublisher').textContent = product.publisher_name || '---';
                     document.getElementById('metaCover').textContent = product.cover_type || '---';
+                    var specs = [];
+                    if (product.dimensions) specs.push(['Kích thước', product.dimensions]);
+                    if (product.language) specs.push(['Ngôn ngữ', product.language]);
+                    if (product.color) specs.push(['Màu sắc / bìa', product.color]);
+                    if (product.pages) specs.push(['Số trang', String(product.pages)]);
+                    if (product.publication_year) specs.push(['Năm xuất bản', String(product.publication_year)]);
+                    specs.push(['Tồn kho', product.stock_label || ((product.quantity > 0) ? ('Còn ' + product.quantity + ' cuốn') : 'Hết hàng')]);
+                    document.getElementById('detailSpecsList').innerHTML = specs.map(function (row) {
+                        return '<li><span class="text-muted">' + escHtml(row[0]) + ':</span> <strong>' + escHtml(row[1]) + '</strong></li>';
+                    }).join('');
                     document.getElementById('reviewCount').textContent = '(' + reviews.length + ' đánh giá)';
                     document.getElementById('soldCount').textContent = 'Đã bán ' + (product.sold_count || 0);
+                    var listPriceEl = document.getElementById('productListPrice');
+                    if (product.has_discount && product.list_price != null) {
+                        listPriceEl.textContent = Number(product.list_price).toLocaleString('vi-VN') + ' đ';
+                        listPriceEl.classList.remove('d-none');
+                    } else {
+                        listPriceEl.classList.add('d-none');
+                    }
                     document.getElementById('productPrice').textContent = Number(product.price).toLocaleString('vi-VN') + ' đ';
                     if (product.quantity > 0) {
                         document.getElementById('stockBadge').classList.remove('d-none');
                         document.getElementById('outOfStockBadge').classList.add('d-none');
+                        document.getElementById('stockBadge').innerHTML = '<i class="fas fa-box"></i> ' + escHtml(product.stock_label || ('Còn ' + product.quantity + ' cuốn'));
                     } else {
                         document.getElementById('stockBadge').classList.add('d-none');
                         document.getElementById('outOfStockBadge').classList.remove('d-none');
                     }
+                    var qtyInput = document.getElementById('qtyInput');
+                    qtyInput.max = Math.max(1, parseInt(product.quantity, 10) || 1);
+                    if (parseInt(qtyInput.value, 10) > parseInt(qtyInput.max, 10)) qtyInput.value = qtyInput.max;
                     document.getElementById('productDescription').innerHTML = product.description || 'Đang cập nhật nội dung...';
                     document.getElementById('btnAddToCart').dataset.id = product.id;
                     document.getElementById('btnBuyNow').dataset.id = product.id;
@@ -336,12 +407,17 @@
                         return '<div class="review-item"><div class="review-avatar">' + (r.full_name ? r.full_name.charAt(0).toUpperCase() : 'U') + '</div><div class="review-content"><div class="review-header"><span class="review-name">' + (r.full_name || 'Người dùng ẩn danh') + '</span><span class="verified-badge"><i class="fas fa-check-circle"></i> Đã mua hàng</span></div><div class="review-stars text-warning">' + starHtml + '</div><div class="review-text">' + r.comment + '</div><div class="review-date">' + new Date(r.created_at).toLocaleDateString('vi-VN') + '</div>' + replyHtml + '</div></div>';
                     }).join('') : '<p class="text-muted text-center py-3 small">Chưa có đánh giá nào.</p>';
 
+                    var relatedEmpty = document.getElementById('relatedEmpty');
+                    var relatedGrid = document.getElementById('relatedGrid');
                     if (related.length > 0) {
-                        document.getElementById('relatedSection').classList.remove('d-none');
-                        document.getElementById('relatedGrid').innerHTML = related.map(item => {
+                        relatedEmpty.classList.add('d-none');
+                        relatedGrid.innerHTML = related.map(item => {
                             let rImg = (item.image_url && !item.image_url.startsWith('http')) ? '/images/' + item.image_url : (item.image_url || '/images/default.jpg');
-                            return '<div class="col"><a href="/product/' + item.id + '" class="text-decoration-none"><div class="card related-card"><img src="' + rImg + '" class="related-img card-img-top" alt="' + item.name + '" onerror="this.src=\'https://picsum.photos/200/300\'"><div class="card-body p-2"><h6 class="related-title">' + item.name + '</h6><div class="related-price">' + Number(item.price).toLocaleString('vi-VN') + ' đ</div></div></div></a></div>';
+                            return '<div class="col"><a href="/product/' + item.id + '" class="text-decoration-none"><div class="card related-card"><img src="' + rImg + '" class="related-img card-img-top" alt="' + item.name.replace(/"/g, '&quot;') + '" onerror="this.src=\'https://picsum.photos/200/300\'"><div class="card-body p-2"><h6 class="related-title">' + item.name + '</h6><div class="related-price">' + Number(item.price).toLocaleString('vi-VN') + ' đ</div></div></div></a></div>';
                         }).join('');
+                    } else {
+                        relatedEmpty.classList.remove('d-none');
+                        relatedGrid.innerHTML = '';
                     }
                     const btnAdd = document.getElementById('btnAddToCart');
                     if (btnAdd) btnAdd.addEventListener('click', function() {
@@ -352,9 +428,15 @@
                             .then(r => r.json()).then(data => {
                                 if (data.success) {
                                     showSuccessToast(data.message || 'Đã thêm vào giỏ hàng thành công!');
+                                    if (window.booktotalCartMirror && data.cart) {
+                                        window.booktotalCartMirror.save(data.cart, data.totalQty);
+                                    }
                                     if (window.updateCartDropdown) window.updateCartDropdown();
-                                    const cc = document.querySelector('.cart-count');
-                                    if (cc) cc.textContent = data.totalQty;
+                                    var badge = document.getElementById('cartBadgeCount');
+                                    if (badge && typeof data.totalQty === 'number') {
+                                        badge.textContent = data.totalQty > 99 ? '99+' : String(data.totalQty);
+                                        badge.style.display = data.totalQty > 0 ? 'block' : 'none';
+                                    }
                                 } else if (window.showNotice) window.showNotice(data.message || 'Có lỗi xảy ra', 'error');
                             }).catch(() => { if (window.showNotice) window.showNotice('Đã xảy ra lỗi. Vui lòng thử lại.', 'error'); });
                     });
@@ -367,6 +449,11 @@
                         fetch('/cart/add/' + pid, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity: qty }) })
                             .then(r => r.json()).then(data => {
                                 if (data.success) {
+                                    if (window.booktotalCartMirror && data.cart) {
+                                        window.booktotalCartMirror.save(data.cart, data.totalQty);
+                                    }
+                                    if (window.updateCartDropdown) window.updateCartDropdown();
+                                    showSuccessToast(data.message || 'Đã thêm vào giỏ hàng!');
                                     window.location.href = '/cart';
                                 } else {
                                     if (window.showNotice) window.showNotice(data.message || 'Có lỗi xảy ra', 'error');

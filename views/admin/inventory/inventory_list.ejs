@@ -113,6 +113,18 @@
                     </div>
 
                     <div class="container pb-5">
+                        <% if (typeof lowStockWarningCount !== 'undefined' && lowStockWarningCount > 0) { %>
+                        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center mb-4" role="alert">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3 text-warning"></i>
+                            <div>
+                                <strong>Cảnh báo tồn kho thấp</strong>
+                                <p class="mb-0 small">
+                                    Có <strong><%= lowStockWarningCount %></strong> sản phẩm đang có tồn kho dưới
+                                    <strong><%= stockLowThreshold %></strong> cuốn (kể cả hết hàng). Vui lòng nhập thêm hàng kịp thời.
+                                </p>
+                            </div>
+                        </div>
+                        <% } %>
                         <!-- Bảng thống kê -->
                         <div class="row mb-4">
                             <div class="col-md-6 mb-3">
@@ -135,7 +147,7 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <h6 class="text-uppercase mb-2 opacity-75">Hàng sắp hết</h6>
+                                                <h6 class="text-uppercase mb-2 opacity-75">Sắp hết (&lt; <%= stockLowThreshold %>)</h6>
                                                 <h2 class="mb-0 fw-bold">
                                                     <%= lowStockProducts %>
                                                 </h2>
@@ -215,7 +227,7 @@
                                                 statusClass = 'stock-out';
                                                 statusText = 'Hết hàng';
                                                 filterType = 'out';
-                                                } else if (p.quantity < 10) { statusClass='stock-low' ;
+                                                } else if (p.quantity < stockLowThreshold) { statusClass='stock-low' ;
                                                     statusText='Sắp hết' ; filterType='low' ; } %>
                                                     <tr class="inventory-row" data-type="<%= filterType %>">
                                                         <td>
@@ -238,7 +250,7 @@
                                                         <td class="text-center">
                                                             <%= Number(p.price).toLocaleString('vi-VN') %> đ
                                                         </td>
-                                                        <td class="text-center fw-bold inventory-nowrap <%= p.quantity > 0 && p.quantity < 10 ? 'text-danger' : '' %>"
+                                                        <td class="text-center fw-bold inventory-nowrap <%= p.quantity > 0 && p.quantity < stockLowThreshold ? 'text-danger' : '' %>"
                                                             style="font-size: 1.1rem;">
                                                             <%= p.quantity %>
                                                         </td>

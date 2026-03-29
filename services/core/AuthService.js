@@ -14,26 +14,39 @@ class AuthService {
         this.mailer = mailer || new MailerService();
     }
 
-    createToken(id, username, role, full_name, email) {
-        return jwt.sign({ id, username, role, full_name, email }, JWT_SECRET, { expiresIn: Token.JWT_EXPIRY });
+    createToken(id, username, role, full_name, email, phone, address) {
+        const payload = {
+            id,
+            username,
+            role,
+            full_name,
+            email,
+            phone: phone != null ? phone : '',
+            address: address != null ? address : ''
+        };
+        return jwt.sign(payload, JWT_SECRET, { expiresIn: Token.JWT_EXPIRY });
     }
 
     async authenticateUser(username, password) {
-        const user = await this.userRepository.login(username, password);
-        if (!user) throw new Error("Sai tên đăng nhập hoặc mật khẩu!");
+        const result = await this.userRepository.login(username, password);
+        if (result && result.locked) throw new Error('Tài khoản đã bị khóa. Liên hệ quản trị viên.');
+        if (!result) throw new Error("Sai tên đăng nhập hoặc mật khẩu!");
+        const user = result;
 
         const role = user.role ? user.role.trim().toLowerCase() : 'user';
-        const token = this.createToken(user.id, user.username, role, user.full_name, user.email);
+        const token = this.createToken(user.id, user.username, role, user.full_name, user.email, user.phone, user.address);
         const { password: _, reset_token, reset_token_expiry, ...safeUser } = user;
         return { user: safeUser, token, role };
     }
 
     async authenticateUserWeb(username, password) {
-        const user = await this.userRepository.login(username, password);
-        if (!user) return null;
+        const result = await this.userRepository.login(username, password);
+        if (result && result.locked) return { locked: true };
+        if (!result) return null;
+        const user = result;
 
         const role = user.role ? user.role.trim().toLowerCase() : 'user';
-        const token = this.createToken(user.id, user.username, role, user.full_name, user.email);
+        const token = this.createToken(user.id, user.username, role, user.full_name, user.email, user.phone, user.address);
         return { token, role, userId: user.id };
     }
 
@@ -72,14 +85,18 @@ class AuthService {
     }
 
     async initiatePasswordReset(email) {
-        const user = await this.userRepository.getUserByEmail(email);
-        if (!user) return { success: false, error: 'Email không tồn tại trong hệ thống!' };
+        const raw = typeof email === 'string' ? email.trim() : '';
+        if (!raw) return { success: false, error: 'Vui lòng nhập email.' };
+
+        const user = await this.userRepository.getUserByEmail(raw);
+        if (!user) return { success: false, error: 'Email không tồn tại trong hệ thống. Vui lòng kiểm tra lại địa chỉ email.' };
 
         const token = crypto.randomBytes(32).toString('hex');
         const expiry = new Date(Date.now() + Token.RESET_EXPIRY_MS);
         await this.userRepository.saveResetToken(user.email, token, expiry);
-        await this.mailer.sendResetPasswordEmail(user.email, token);
-        return { success: true, email: user.email };
+        const validMinutes = Math.round(Token.RESET_EXPIRY_MS / 60000);
+        await this.mailer.sendResetPasswordEmail(user.email, token, validMinutes);
+        return { success: true, email: user.email, validMinutes };
     }
 
     async verifyResetToken(token) {
@@ -90,7 +107,7 @@ class AuthService {
 
     async resetPasswordWithToken(token, password) {
         const user = await this.userRepository.getUserByResetToken(token);
-        if (!user) return { success: false, error: 'Link không hợp lệ.' };
+        if (!user) return { success: false, error: 'Mã xác nhận không hợp lệ hoặc đã hết hạn. Vui lòng gửi lại yêu cầu từ trang quên mật khẩu.' };
         await this.userRepository.resetPassword(user.id, password);
         return { success: true };
     }
@@ -99,15 +116,46 @@ class AuthService {
         return this.userRepository.getUserById(id);
     }
 
-    async updateProfile(userId, { email, full_name }) {
+    async updateProfile(userId, body) {
+        const email = body.email != null ? String(body.email).trim() : '';
+        const full_name = body.full_name != null ? String(body.full_name).trim() : '';
+
+        if (!full_name) return { success: false, error: 'Vui lòng nhập họ và tên.' };
         if (!this.authValidator.validateEmail(email)) return { success: false, error: 'Email không hợp lệ!' };
 
         const user = await this.userRepository.getUserById(userId);
         if (!user) return { success: false, error: 'Tài khoản không tồn tại!' };
 
-        await this.userRepository.updateUser(userId, { email, full_name, role: user.role });
-        const role = user.role ? user.role.trim().toLowerCase() : 'user';
-        const newToken = this.createToken(user.id, user.username, role, full_name, email);
+        const roleNorm = user.role ? user.role.trim().toLowerCase() : 'user';
+        const isCustomer = roleNorm !== 'admin';
+
+        const phoneInBody = Object.prototype.hasOwnProperty.call(body, 'phone');
+        const addrInBody = Object.prototype.hasOwnProperty.call(body, 'address');
+        let phone = phoneInBody ? String(body.phone ?? '').trim() : String(user.phone || '').trim();
+        let address = addrInBody ? String(body.address ?? '').trim() : String(user.address || '').trim();
+
+        if (isCustomer) {
+            const digits = phone.replace(/\D/g, '');
+            if (digits.length < 8 || digits.length > 15) {
+                return { success: false, error: 'Vui lòng nhập số điện thoại hợp lệ (8–15 chữ số).' };
+            }
+            if (address.length < 5) {
+                return { success: false, error: 'Vui lòng nhập địa chỉ giao hàng (ít nhất 5 ký tự).' };
+            }
+            if (address.length > 500) {
+                return { success: false, error: 'Địa chỉ không được vượt quá 500 ký tự.' };
+            }
+        }
+
+        await this.userRepository.updateUser(userId, {
+            email,
+            full_name,
+            role: user.role,
+            phone: phone || null,
+            address: address || null
+        });
+
+        const newToken = this.createToken(user.id, user.username, roleNorm, full_name, email, phone || '', address || '');
         return { success: true, token: newToken };
     }
 

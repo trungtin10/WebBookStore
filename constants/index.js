@@ -17,12 +17,12 @@ const PaymentStatus = {
 };
 
 const OrderStatusLabels = {
-    [OrderStatus.PENDING]: 'Chờ xác nhận',
-    [OrderStatus.CONFIRMED]: 'Đã xác nhận',
-    [OrderStatus.PROCESSING]: 'Đang xử lý',
-    [OrderStatus.SHIPPED]: 'Đã giao cho ĐVVC',
-    [OrderStatus.DELIVERING]: 'Đang giao hàng',
-    [OrderStatus.COMPLETED]: 'Hoàn thành',
+    [OrderStatus.PENDING]: 'Chờ duyệt',
+    [OrderStatus.CONFIRMED]: 'Đã duyệt',
+    [OrderStatus.PROCESSING]: 'Chuẩn bị hàng',
+    [OrderStatus.SHIPPED]: 'Đang vận chuyển',
+    [OrderStatus.DELIVERING]: 'Đang giao',
+    [OrderStatus.COMPLETED]: 'Đã giao',
     [OrderStatus.CANCELLED]: 'Đã hủy'
 };
 
@@ -32,12 +32,14 @@ const Shipping = {
 };
 
 const Stock = {
-    LOW_THRESHOLD: 10,
-    OK_MIN_QUANTITY: 10
+    /** Tồn < giá trị này: cảnh báo / lọc "sắp hết" (không tính hết hàng = 0) */
+    LOW_THRESHOLD: 5,
+    OK_MIN_QUANTITY: 5
 };
 
 const Token = {
-    RESET_EXPIRY_MS: 3600000, // 1 hour
+    /** Thời hạn link / mã đặt lại mật khẩu (quên mật khẩu) */
+    RESET_EXPIRY_MS: 15 * 60 * 1000, // 15 phút
     JWT_EXPIRY: '1d'
 };
 

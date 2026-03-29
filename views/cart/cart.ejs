@@ -92,19 +92,87 @@
         }
         let currentTotal = 0;
         let currentProductDiscount = 0;
+        let currentCouponCode = '';
         function formatMoney(amount) { return amount.toLocaleString('vi-VN') + ' đ'; }
+        function clearAppliedCoupon() {
+            currentProductDiscount = 0;
+            currentCouponCode = '';
+            const t = document.getElementById('productDiscountText');
+            const a = document.getElementById('productDiscountAmount');
+            const h = document.getElementById('hiddenProductDiscount');
+            const c = document.getElementById('hiddenCouponCode');
+            if (t) t.innerText = 'Chọn mã >';
+            if (a) a.innerText = '-0 đ';
+            if (h) h.value = '0';
+            if (c) c.value = '';
+        }
+        function applyCouponPayload(payload) {
+            if (!payload) return;
+            const disc = Number(payload.discount);
+            if (!Number.isFinite(disc) || disc < 0) return;
+            const type = (payload.type || '').toLowerCase();
+            if (type !== 'product') {
+                clearAppliedCoupon();
+                return;
+            }
+            currentProductDiscount = disc;
+            currentCouponCode = payload.code || '';
+            const t = document.getElementById('productDiscountText');
+            const a = document.getElementById('productDiscountAmount');
+            const h = document.getElementById('hiddenProductDiscount');
+            const c = document.getElementById('hiddenCouponCode');
+            if (t) t.innerText = currentCouponCode;
+            if (a) a.innerText = '-' + formatMoney(currentProductDiscount);
+            if (h) h.value = String(currentProductDiscount);
+            if (c) c.value = currentCouponCode;
+            calculateFinalTotal();
+        }
+        function syncCouponToCartTotal() {
+            const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+            if (checkboxes.length === 0 || currentTotal <= 0) {
+                clearAppliedCoupon();
+                calculateFinalTotal();
+                return;
+            }
+            if (!currentCouponCode) {
+                const h = document.getElementById('hiddenProductDiscount');
+                if (h) h.value = String(currentProductDiscount);
+                calculateFinalTotal();
+                return;
+            }
+            fetch('/api/coupon/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: currentCouponCode, totalAmount: currentTotal }),
+                credentials: 'same-origin'
+            })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.success && data.data && (data.data.type || '').toLowerCase() === 'product') {
+                        applyCouponPayload({ type: 'product', code: data.data.code, discount: Number(data.data.discount) });
+                    } else {
+                        clearAppliedCoupon();
+                        const m = data.message || '';
+                        if (m && window.showNotice && m.indexOf('phải từ') === -1) window.showNotice(m, 'error');
+                        calculateFinalTotal();
+                    }
+                })
+                .catch(function() {
+                    calculateFinalTotal();
+                });
+        }
         function updateTotal() {
             let total = 0;
             const checkboxes = document.querySelectorAll('.product-checkbox:checked');
             checkboxes.forEach(cb => {
-                const price = parseInt(cb.getAttribute('data-price'));
-                const qty = parseInt(cb.getAttribute('data-qty'));
-                total += price * qty;
+                const price = parseInt(cb.getAttribute('data-price'), 10);
+                const qty = parseInt(cb.getAttribute('data-qty'), 10);
+                total += (Number.isFinite(price) ? price : 0) * (Number.isFinite(qty) ? qty : 0);
             });
             currentTotal = total;
-            document.getElementById('tempTotal').innerText = formatMoney(total);
-            resetCoupons();
-            calculateFinalTotal();
+            const tempEl = document.getElementById('tempTotal');
+            if (tempEl) tempEl.innerText = formatMoney(total);
+            syncCouponToCartTotal();
             const btnCheckout = document.getElementById('btnCheckout');
             if (btnCheckout) {
                 if (checkboxes.length === 0) {
@@ -112,20 +180,15 @@
                     btnCheckout.innerText = "Vui lòng chọn sản phẩm";
                 } else {
                     btnCheckout.disabled = false;
-                    btnCheckout.innerText = `THANH TOÁN (${checkboxes.length})`;
+                    btnCheckout.innerText = 'THANH TOÁN (' + checkboxes.length + ')';
                 }
             }
         }
         function calculateFinalTotal() {
             let final = currentTotal - currentProductDiscount;
             if (final < 0) final = 0;
-            document.getElementById('finalTotal').innerText = formatMoney(final);
-        }
-        function resetCoupons() {
-            currentProductDiscount = 0;
-            document.getElementById('productDiscountText').innerText = "Chọn mã >";
-            document.getElementById('productDiscountAmount').innerText = "-0 đ";
-            document.getElementById('hiddenProductDiscount').value = 0;
+            const el = document.getElementById('finalTotal');
+            if (el) el.innerText = formatMoney(final);
         }
         function toggleAll(source) {
             const checkboxes = document.querySelectorAll('.product-checkbox');
@@ -133,9 +196,9 @@
             updateTotal();
         }
         function loadCoupons(type) {
-            fetch('/api/coupons').then(res => res.json()).then(data => {
+            fetch('/api/coupons', { credentials: 'same-origin' }).then(res => res.json()).then(data => {
                 const list = document.getElementById('couponList');
-                if (data.success) {
+                if (data.success && data.data && data.data.product) {
                     const coupons = data.data.product;
                     if (coupons.length > 0) {
                         let html = '';
@@ -147,38 +210,108 @@
                         });
                         list.innerHTML = html;
                     } else { list.innerHTML = '<p class="text-center text-muted">Không có mã nào phù hợp.</p>'; }
+                } else if (list) {
+                    list.innerHTML = '<p class="text-center text-muted">Không tải được danh sách mã.</p>';
                 }
             });
         }
         function applyCoupon(code) {
-            fetch('/api/coupon/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: code, totalAmount: currentTotal }) })
+            fetch('/api/coupon/check', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: code, totalAmount: currentTotal }),
+                credentials: 'same-origin'
+            })
             .then(res => res.json()).then(data => {
                 const messageBox = document.createElement('div');
-                messageBox.className = `alert alert-${data.success ? 'success' : 'danger'} alert-dismissible fade show`;
-                messageBox.innerHTML = `${data.message} <button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+                messageBox.className = 'alert alert-' + (data.success ? 'success' : 'danger') + ' alert-dismissible fade show';
+                messageBox.innerHTML = (data.message || '') + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
                 document.querySelector('.main-content').prepend(messageBox);
-                if (data.success) {
-                    currentProductDiscount = data.discount;
-                    document.getElementById('productDiscountText').innerText = data.code;
-                    document.getElementById('productDiscountAmount').innerText = `-${formatMoney(data.discount)}`;
-                    document.getElementById('hiddenProductDiscount').value = data.discount;
-                    calculateFinalTotal();
+                if (data.success && data.data) {
+                    const payload = data.data;
+                    const ctype = (payload.type || '').toLowerCase();
+                    if (ctype === 'product') {
+                        applyCouponPayload(payload);
+                    } else {
+                        if (window.showNotice) window.showNotice('Mã này không áp dụng cho tạm tính sản phẩm.', 'error');
+                    }
                 }
             }).catch(err => console.error(err));
         }
-        fetch('/api/cart-data')
+
+        function buildCartItemRow(item) {
+            const imgSrc = (item.image_url && !item.image_url.startsWith('http')) ? '/images/' + item.image_url : (item.image_url || '/images/default.jpg');
+            const price = Number(item.price);
+            const qty = parseInt(item.quantity, 10) || 0;
+            const maxStock = typeof item.max_stock === 'number' ? item.max_stock : (parseInt(item.max_stock, 10) || 0);
+            const plusDisabled = (maxStock <= 0 || qty >= maxStock) ? ' disabled' : '';
+            const lineTotal = (price * qty).toLocaleString('vi-VN');
+            const pid = String(item.id);
+            return '<div class="cart-item" data-product-id="' + pid + '"><div class="col-check"><input type="checkbox" name="selected_items[]" value="' + pid + '" class="item-checkbox product-checkbox" data-price="' + price + '" data-qty="' + qty + '" checked onchange="updateTotal()"></div><div class="col-product"><div class="product-info-flex"><img src="' + imgSrc + '" class="item-img" onerror="this.src=\'https://picsum.photos/200/300\'"><div><div class="item-name">' + item.name + '</div><div class="item-price-single">' + price.toLocaleString('vi-VN') + ' đ</div></div></div></div><div class="col-qty"><div class="qty-control cart-qty-control"><button type="button" class="btn-qty-minus" data-id="' + pid + '" aria-label="Giảm số lượng">−</button><span class="cart-qty-display">' + qty + '</span><button type="button" class="btn-qty-plus" data-id="' + pid + '"' + plusDisabled + ' aria-label="Tăng số lượng">+</button></div></div><div class="col-total cart-line-total">' + lineTotal + ' đ</div><div class="col-action"><a href="/cart/remove/' + pid + '" class="btn-delete" title="Xóa sản phẩm"><i class="fas fa-trash-alt"></i></a></div></div>';
+        }
+
+        function buildCartPageInner(cart) {
+            const itemsHtml = cart.map(buildCartItemRow).join('');
+            return '<form action="/checkout" method="POST" id="cartForm" onsubmit="return checkLogin(event)"><div class="row"><div class="col-lg-8"><div class="cart-container"><div class="cart-header-row"><div class="col-check"><input type="checkbox" id="selectAll" class="item-checkbox" checked onchange="toggleAll(this)"></div><div class="col-product">Chọn tất cả (' + cart.length + ' sản phẩm)</div><div class="col-qty">Số lượng</div><div class="col-total">Thành tiền</div><div class="col-action"></div></div>' + itemsHtml + '</div></div><div class="col-lg-4"><div class="cart-container"><h5 class="cart-summary-header">Thanh toán</h5><div class="coupon-section"><div class="coupon-row" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="loadCoupons(\'product\')"><span class="coupon-label"><i class="fas fa-ticket-alt me-2 text-warning"></i> Mã giảm giá</span><span class="coupon-value" id="productDiscountText">Chọn mã ></span></div></div><div class="d-flex justify-content-between mb-2"><span class="text-muted">Tạm tính:</span><span class="fw-bold" id="tempTotal">0 đ</span></div><div class="d-flex justify-content-between mb-3"><span class="text-muted">Giảm giá:</span><span class="text-success" id="productDiscountAmount">-0 đ</span></div><hr><div class="d-flex justify-content-between mb-4"><span class="fw-bold fs-5">Tổng cộng:</span><span class="fw-bold fs-4 text-danger" id="finalTotal">0 đ</span></div><input type="hidden" name="product_discount" id="hiddenProductDiscount" value="0"><input type="hidden" name="coupon_code" id="hiddenCouponCode" value=""><button type="submit" class="btn btn-checkout" id="btnCheckout">TIẾN HÀNH THANH TOÁN</button></div></div></div></form>';
+        }
+
+        function renderCartFromData(cart) {
+            const emptyEl = document.getElementById('emptyCart');
+            const contentEl = document.getElementById('cartContent');
+            if (!cart || cart.length === 0) {
+                contentEl.classList.add('d-none');
+                contentEl.innerHTML = '';
+                emptyEl.classList.remove('d-none');
+                if (window.updateCartDropdown) window.updateCartDropdown();
+                return;
+            }
+            emptyEl.classList.add('d-none');
+            contentEl.classList.remove('d-none');
+            contentEl.innerHTML = buildCartPageInner(cart);
+            updateTotal();
+            if (window.updateCartDropdown) window.updateCartDropdown();
+        }
+
+        document.getElementById('cartContent').addEventListener('click', function(e) {
+            const minus = e.target.closest('.btn-qty-minus');
+            const plus = e.target.closest('.btn-qty-plus');
+            if (!minus && !plus) return;
+            e.preventDefault();
+            const btn = minus || plus;
+            if (btn.disabled) return;
+            const id = btn.getAttribute('data-id');
+            const action = minus ? 'decrease' : 'increase';
+            btn.disabled = true;
+            const sibling = minus ? btn.parentElement.querySelector('.btn-qty-plus') : btn.parentElement.querySelector('.btn-qty-minus');
+            if (sibling) sibling.disabled = true;
+            fetch('/cart/update/' + encodeURIComponent(id) + '?action=' + action + '&format=json', { credentials: 'same-origin' })
+                .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+                .then(function(res) {
+                    if (res.data.success) {
+                        renderCartFromData(res.data.cart);
+                    } else {
+                        if (window.showNotice) window.showNotice(res.data.message || 'Không thể cập nhật số lượng', 'error');
+                        if (res.data.cart) renderCartFromData(res.data.cart);
+                        else {
+                            btn.disabled = false;
+                            if (sibling) sibling.disabled = false;
+                        }
+                    }
+                })
+                .catch(function() {
+                    if (window.showNotice) window.showNotice('Đã xảy ra lỗi. Vui lòng thử lại.', 'error');
+                    btn.disabled = false;
+                    if (sibling) sibling.disabled = false;
+                });
+        });
+
+        fetch('/cart-data')
             .then(r => r.json())
             .then(data => {
                 document.getElementById('loadingCart').classList.add('d-none');
                 const cart = data.success && data.cart ? data.cart : [];
                 if (cart.length > 0) {
-                    document.getElementById('cartContent').classList.remove('d-none');
-                    let itemsHtml = cart.map(item => {
-                        let imgSrc = (item.image_url && !item.image_url.startsWith('http')) ? '/images/' + item.image_url : (item.image_url || '/images/default.jpg');
-                        return '<div class="cart-item"><div class="col-check"><input type="checkbox" name="selected_items[]" value="' + item.id + '" class="item-checkbox product-checkbox" data-price="' + item.price + '" data-qty="' + item.quantity + '" checked onchange="updateTotal()"></div><div class="col-product"><div class="product-info-flex"><img src="' + imgSrc + '" class="item-img" onerror="this.src=\'https://picsum.photos/200/300\'"><div><div class="item-name">' + item.name + '</div><div class="item-price-single">' + Number(item.price).toLocaleString('vi-VN') + ' đ</div></div></div></div><div class="col-qty"><div class="qty-control"><input type="text" class="qty-input" value="' + item.quantity + '" readonly></div></div><div class="col-total">' + (item.price * item.quantity).toLocaleString('vi-VN') + ' đ</div><div class="col-action"><a href="/cart/remove/' + item.id + '" class="btn-delete" title="Xóa sản phẩm"><i class="fas fa-trash-alt"></i></a></div></div>';
-                    }).join('');
-                    document.getElementById('cartContent').innerHTML = '<form action="/checkout" method="POST" id="cartForm" onsubmit="return checkLogin(event)"><div class="row"><div class="col-lg-8"><div class="cart-container"><div class="cart-header-row"><div class="col-check"><input type="checkbox" id="selectAll" class="item-checkbox" checked onchange="toggleAll(this)"></div><div class="col-product">Chọn tất cả (' + cart.length + ' sản phẩm)</div><div class="col-qty">Số lượng</div><div class="col-total">Thành tiền</div><div class="col-action"></div></div>' + itemsHtml + '</div></div><div class="col-lg-4"><div class="cart-container"><h5 class="cart-summary-header">Thanh toán</h5><div class="coupon-section"><div class="coupon-row" data-bs-toggle="modal" data-bs-target="#couponModal" onclick="loadCoupons(\'product\')"><span class="coupon-label"><i class="fas fa-ticket-alt me-2 text-warning"></i> Mã giảm giá</span><span class="coupon-value" id="productDiscountText">Chọn mã ></span></div></div><div class="d-flex justify-content-between mb-2"><span class="text-muted">Tạm tính:</span><span class="fw-bold" id="tempTotal">0 đ</span></div><div class="d-flex justify-content-between mb-3"><span class="text-muted">Giảm giá:</span><span class="text-success" id="productDiscountAmount">-0 đ</span></div><hr><div class="d-flex justify-content-between mb-4"><span class="fw-bold fs-5">Tổng cộng:</span><span class="fw-bold fs-4 text-danger" id="finalTotal">0 đ</span></div><input type="hidden" name="product_discount" id="hiddenProductDiscount" value="0"><button type="submit" class="btn btn-checkout" id="btnCheckout">TIẾN HÀNH THANH TOÁN</button></div></div></div></form>';
-                    updateTotal();
+                    renderCartFromData(cart);
                 } else {
                     document.getElementById('emptyCart').classList.remove('d-none');
                 }

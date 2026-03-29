@@ -21,7 +21,12 @@ class ApiCouponController extends BaseApiController {
     }
 
     async checkCoupon(req, res) {
-        const { code, totalAmount, shippingFee = 30000 } = req.body;
+        const { code, shippingFee: rawShip = 30000 } = req.body;
+        const totalAmount = Number(req.body.totalAmount);
+        const shippingFee = Number(rawShip);
+        if (!Number.isFinite(totalAmount) || totalAmount < 0) {
+            return this.apiResponse.error(res, "Tổng đơn không hợp lệ", 400);
+        }
         const coupon = await this.couponService.getCouponByCode(code);
         if (!coupon) return this.apiResponse.error(res, "Mã không hợp lệ hoặc đã hết hạn!", 400);
         if (totalAmount < coupon.min_order_value) {
@@ -30,7 +35,8 @@ class ApiCouponController extends BaseApiController {
 
         let discount = 0;
         let message = "";
-        if (coupon.type === 'product') {
+        const ctype = (coupon.type || '').toLowerCase();
+        if (ctype === 'product') {
             if (coupon.discount_type === 'percent') {
                 discount = (totalAmount * coupon.discount_value) / 100;
                 if (coupon.max_discount_amount > 0 && discount > coupon.max_discount_amount) discount = coupon.max_discount_amount;
@@ -39,9 +45,10 @@ class ApiCouponController extends BaseApiController {
             }
             if (discount > totalAmount) discount = totalAmount;
             message = "Áp dụng mã giảm giá sản phẩm thành công!";
-        } else if (coupon.type === 'shipping') {
+        } else if (ctype === 'shipping') {
             discount = coupon.discount_value;
-            if (discount > shippingFee) discount = shippingFee;
+            const shipCap = Number.isFinite(shippingFee) && shippingFee >= 0 ? shippingFee : 30000;
+            if (discount > shipCap) discount = shipCap;
             message = "Áp dụng mã Freeship thành công!";
         }
 

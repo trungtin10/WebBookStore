@@ -2,6 +2,7 @@ const express = require('express');
 const ProductService = require('../../../services/shop/ProductService');
 const CategoryService = require('../../../services/shop/CategoryService');
 const { requireAdmin } = require('../../../middleware/auth.middleware');
+const { Stock } = require('../../../constants');
 
 class AdminInventoryController {
     constructor(productService = null, categoryService = null) {
@@ -30,13 +31,15 @@ class AdminInventoryController {
                 offset: (page - 1) * limit
             };
 
-            const [products, totalProductsFiltered, categories, totalProducts, lowStockProducts] = await Promise.all([
-                this.productService.getAllProductsAdmin(filters),
-                this.productService.countProducts(filters),
-                this.productService.getCategories(),
-                this.productService.getTotalStockQuantity(),
-                this.productService.countProducts({ stock_status: 'low' })
-            ]);
+            const [products, totalProductsFiltered, categories, totalProducts, lowStockProducts, lowStockWarningCount] =
+                await Promise.all([
+                    this.productService.getAllProductsAdmin(filters),
+                    this.productService.countProducts(filters),
+                    this.productService.getCategories(),
+                    this.productService.getTotalStockQuantity(),
+                    this.productService.countProducts({ stock_status: 'low' }),
+                    this.productService.countProducts({ stock_status: 'below_threshold' })
+                ]);
 
             res.render('admin/inventory/inventory_list', {
                 products,
@@ -45,7 +48,9 @@ class AdminInventoryController {
                 currentPage: page,
                 totalPages: Math.ceil(totalProductsFiltered / limit),
                 totalProducts,
-                lowStockProducts
+                lowStockProducts,
+                lowStockWarningCount,
+                stockLowThreshold: Stock.LOW_THRESHOLD
             });
         } catch (err) {
             console.error(err);

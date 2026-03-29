@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Lịch sử đơn hàng - Bookstore</title>
     <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -15,26 +16,23 @@
         <div class="container">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                 <h4 class="mb-0 fw-bold text-uppercase"><i class="fas fa-history me-2 text-danger"></i> Lịch sử đơn hàng</h4>
-                <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Quay về</a>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="order-poll-hint small text-muted d-none d-md-inline" id="orderPollHint" title="Trạng thái đồng bộ khi quản trị cập nhật đơn hàng">
+                        <i class="fas fa-sync-alt fa-spin me-1 d-none" id="orderPollSpinner"></i>
+                        Cập nhật tự động
+                    </span>
+                    <a href="/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Quay về</a>
+                </div>
             </div>
 
-            <% if (orders && orders.length > 0) { %>
-                <% orders.forEach(order => {
-                    let statusText = 'Chờ xác nhận';
-                    let progressWidth = '0%';
-                    let activeStep = 1;
+            <% const statusLabels = typeof OrderStatusLabels !== 'undefined' ? OrderStatusLabels : {}; %>
 
-                    switch(order.status) {
-                        case 'PENDING': statusText = 'Chờ xác nhận'; progressWidth = '0%'; activeStep = 1; break;
-                        case 'CONFIRMED': statusText = 'Đã xác nhận'; progressWidth = '33%'; activeStep = 2; break;
-                        case 'PROCESSING': statusText = 'Đang xử lý'; progressWidth = '33%'; activeStep = 2; break;
-                        case 'SHIPPED': statusText = 'Đã giao VC'; progressWidth = '66%'; activeStep = 3; break;
-                        case 'DELIVERING': statusText = 'Đang giao hàng'; progressWidth = '66%'; activeStep = 3; break;
-                        case 'COMPLETED': statusText = 'Hoàn thành'; progressWidth = '100%'; activeStep = 4; break;
-                        case 'CANCELLED': statusText = 'Đã hủy'; progressWidth = '0%'; activeStep = 0; break;
-                    }
+            <% if (orders && orders.length > 0) { %>
+                <p class="text-muted small mb-3">Bạn có <strong><%= orders.length %></strong> đơn hàng.</p>
+                <% orders.forEach(order => {
+                    const statusText = statusLabels[order.status] || 'Chờ duyệt';
                 %>
-                    <div class="order-card">
+                    <div class="order-card" data-order-id="<%= order.id %>" data-order-status="<%= order.status %>">
                         <div class="order-header">
                             <div>
                                 <span class="fw-bold me-2">Đơn hàng #<%= order.id %></span>
@@ -44,36 +42,11 @@
                                     <span class="badge bg-info text-dark ms-2"><i class="fas fa-truck me-1"></i> <%= order.tracking_code %></span>
                                 <% } %>
                             </div>
-                            <div class="order-status status-<%= order.status %>"><%= statusText %></div>
+                            <div class="order-status status-<%= order.status %>" data-role="order-status-badge"><%= statusText %></div>
                         </div>
 
                         <div class="order-body">
-                            <% if (order.status !== 'CANCELLED') { %>
-                                <div class="progress-track">
-                                    <div class="progress-line"><div class="progress-line-fill" style="width: <%= progressWidth %>;"></div></div>
-
-                                    <div class="step <%= activeStep >= 1 ? 'active' : '' %>">
-                                        <div class="step-icon"><i class="fas fa-file-alt"></i></div>
-                                        Đặt hàng
-                                    </div>
-                                    <div class="step <%= activeStep >= 2 ? 'active' : '' %>">
-                                        <div class="step-icon"><i class="fas fa-box"></i></div>
-                                        Đóng gói
-                                    </div>
-                                    <div class="step <%= activeStep >= 3 ? 'active' : '' %>">
-                                        <div class="step-icon"><i class="fas fa-truck"></i></div>
-                                        Vận chuyển
-                                    </div>
-                                    <div class="step <%= activeStep >= 4 ? 'active' : '' %>">
-                                        <div class="step-icon"><i class="fas fa-star"></i></div>
-                                        Hoàn thành
-                                    </div>
-                                </div>
-                            <% } else { %>
-                                <div class="order-cancelled-note">
-                                    <i class="fas fa-ban me-2"></i> Đơn hàng này đã bị hủy.
-                                </div>
-                            <% } %>
+                            <%- include('partials/order_progress_3', { order }) %>
 
                             <% if (order.items && order.items.length > 0) { %>
                                 <% order.items.forEach(item => { %>
@@ -99,6 +72,9 @@
                                 <span class="total-price"><%= Number(order.final_total).toLocaleString('vi-VN') %> đ</span>
                             </div>
                         </div>
+                        <div class="order-card-actions">
+                            <a href="/orders/<%= order.id %>" class="btn btn-sm btn-outline-danger"><i class="fas fa-file-invoice me-1"></i> Xem chi tiết</a>
+                        </div>
                     </div>
                 <% }); %>
             <% } else { %>
@@ -112,7 +88,108 @@
         </div>
     </div>
 
+    <script id="orderStatusLabelsJson" type="application/json"><%- JSON.stringify(statusLabels) %></script>
+
     <%- include('../partials/footer') %>
     <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script>
+(function () {
+    var POLL_MS = 25000;
+    var statusLabels = {};
+    try {
+        var el = document.getElementById('orderStatusLabelsJson');
+        if (el && el.textContent) statusLabels = JSON.parse(el.textContent);
+    } catch (e) {}
+
+    var PROGRESS_BY_STATUS = {
+        PENDING:     { fill: '8%',  steps: ['current', 'upcoming', 'upcoming'] },
+        CONFIRMED:   { fill: '36%', steps: ['done', 'upcoming', 'upcoming'] },
+        PROCESSING:  { fill: '36%', steps: ['done', 'upcoming', 'upcoming'] },
+        SHIPPED:     { fill: '64%', steps: ['done', 'current', 'upcoming'] },
+        DELIVERING:  { fill: '64%', steps: ['done', 'current', 'upcoming'] },
+        COMPLETED:   { fill: '100%', steps: ['done', 'done', 'done'] }
+    };
+
+    function setStepClasses(stepEl, state) {
+        if (!stepEl) return;
+        stepEl.classList.remove('done', 'current', 'upcoming');
+        stepEl.classList.add(state);
+    }
+
+    function applyProgressToCard(card, status) {
+        if (!card) return;
+        card.setAttribute('data-order-status', status);
+
+        var badge = card.querySelector('[data-role="order-status-badge"]');
+        if (badge) {
+            badge.textContent = statusLabels[status] || status;
+            badge.className = 'order-status status-' + status;
+            badge.setAttribute('data-role', 'order-status-badge');
+        }
+
+        var track = card.querySelector('[data-role="order-progress"]');
+        if (status === 'CANCELLED') {
+            if (track && track.parentNode) {
+                var note = document.createElement('div');
+                note.className = 'order-cancelled-note';
+                note.innerHTML = '<i class="fas fa-ban me-2"></i> Đơn hàng này đã bị hủy.';
+                track.parentNode.replaceChild(note, track);
+            }
+            return;
+        }
+
+        if (!track) return;
+
+        var cfg = PROGRESS_BY_STATUS[status] || PROGRESS_BY_STATUS.PENDING;
+        var fill = track.querySelector('[data-role="progress-fill"]');
+        if (fill) fill.style.width = cfg.fill;
+
+        setStepClasses(track.querySelector('[data-role="step-1"]'), cfg.steps[0]);
+        setStepClasses(track.querySelector('[data-role="step-2"]'), cfg.steps[1]);
+        setStepClasses(track.querySelector('[data-role="step-3"]'), cfg.steps[2]);
+    }
+
+    function syncFromPayload(list) {
+        if (!list || !list.length) return;
+        var byId = {};
+        list.forEach(function (o) { byId[o.id] = o.status; });
+        document.querySelectorAll('.order-card[data-order-id]').forEach(function (card) {
+            var id = parseInt(card.getAttribute('data-order-id'), 10);
+            if (!byId[id]) return;
+            var prev = card.getAttribute('data-order-status');
+            if (prev === byId[id]) return;
+            applyProgressToCard(card, byId[id]);
+        });
+    }
+
+    function poll() {
+        var spinner = document.getElementById('orderPollSpinner');
+        if (spinner) spinner.classList.remove('d-none');
+        fetch('/orders/status-updates', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data && data.success && data.orders) syncFromPayload(data.orders);
+            })
+            .catch(function () {})
+            .finally(function () {
+                if (spinner) spinner.classList.add('d-none');
+            });
+    }
+
+    var timer;
+    function startPolling() {
+        if (!document.querySelector('.order-card[data-order-id]')) return;
+        timer = setInterval(poll, POLL_MS);
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) return;
+            poll();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        startPolling();
+    });
+})();
+    </script>
 </body>
 </html>

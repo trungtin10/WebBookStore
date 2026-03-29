@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config');
+const UserRepository = require('../repositories/core/UserRepository');
+
+const userRepository = new UserRepository();
 
 class AuthMiddleware {
     checkUser(req, res, next) {
@@ -8,11 +11,22 @@ class AuthMiddleware {
             jwt.verify(token, JWT_SECRET, (err, decodedToken) => {
                 if (err) {
                     res.locals.user = null;
-                    next();
-                } else {
+                    return next();
+                }
+                (async () => {
+                    try {
+                        const active = await userRepository.isUserActive(decodedToken.id);
+                        if (!active) {
+                            res.cookie('jwt', '', { maxAge: 1, path: '/' });
+                            res.locals.user = null;
+                            return next();
+                        }
+                    } catch (e) {
+                        /* Cột is_active chưa có hoặc lỗi DB: không chặn request */
+                    }
                     res.locals.user = decodedToken;
                     next();
-                }
+                })();
             });
         } else {
             res.locals.user = null;

@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Đăng ký - Bookstore</title>
     <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,48 +12,52 @@
 <body>
     <%- include('../partials/menu') %>
 
-    <div class="main-content">
+    <div class="main-content auth-main">
         <div class="auth-card">
-            <h2 class="auth-title">ĐĂNG KÝ</h2>
+            <h2 class="auth-title">Đăng ký</h2>
 
             <% if (locals.registerError) { %>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        if (window.showNotice) window.showNotice(<%- JSON.stringify(registerError) %>, 'error');
-                    });
-                </script>
+                <div class="alert alert-danger" role="alert"><%= registerError %></div>
             <% } %>
 
-            <form action="/register" method="POST">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Họ và tên</label>
-                    <input type="text" class="form-control" name="full_name" required>
+            <form action="/register" method="POST" data-auth-form="register">
+                <div class="auth-field-wrap mb-3">
+                    <label class="form-label fw-bold" for="pageRegFullName">Họ và tên</label>
+                    <input type="text" class="form-control" name="full_name" id="pageRegFullName" autocomplete="name">
+                    <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Email</label>
-                    <input type="email" class="form-control" name="email" required>
+                <div class="auth-field-wrap mb-3">
+                    <label class="form-label fw-bold" for="pageRegEmail">Email</label>
+                    <input type="text" class="form-control" name="email" id="pageRegEmail" autocomplete="email" inputmode="email">
+                    <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Tên đăng nhập</label>
-                    <input type="text" class="form-control" name="username" pattern="^[a-zA-Z0-9_]+$" title="Username chỉ cho phép chữ cái, số hoặc dấu _" required>
+                <div class="auth-field-wrap mb-3">
+                    <label class="form-label fw-bold" for="pageRegUsername">Tên đăng nhập</label>
+                    <input type="text" class="form-control" name="username" id="pageRegUsername" autocomplete="username" autocapitalize="off">
+                    <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Mật khẩu</label>
-                    <input type="password" class="form-control" name="password" required>
+                <div class="auth-field-wrap mb-4">
+                    <label class="form-label fw-bold" for="pageRegPassword">Mật khẩu</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" name="password" id="pageRegPassword" autocomplete="new-password">
+                        <button type="button" class="btn btn-outline-secondary toggle-password" aria-label="Hiển thị mật khẩu" aria-pressed="false">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
                 </div>
 
                 <input type="hidden" name="role" value="user">
 
-                <button type="submit" class="btn-auth">ĐĂNG KÝ</button>
+                <button type="submit" class="btn-auth">Đăng ký</button>
             </form>
 
             <div class="text-center mt-4">
-                <p class="text-muted">Đã có tài khoản? <a href="/login" class="text-decoration-none fw-bold text-danger">Đăng nhập ngay</a></p>
+                <p class="text-muted mb-0">Đã có tài khoản? <a href="/login" class="text-decoration-none fw-bold text-danger">Đăng nhập ngay</a></p>
             </div>
         </div>
     </div>
 
     <%- include('../partials/footer') %>
-    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 </body>
 </html>

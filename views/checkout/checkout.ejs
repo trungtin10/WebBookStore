@@ -57,7 +57,7 @@
 
                             <div class="col-12">
                                 <label class="form-label">Địa chỉ cụ thể</label>
-                                <input type="text" class="form-control" id="address_detail" name="address_detail" required oninput="updateAddressString()">
+                                <input type="text" class="form-control" id="address_detail" name="address_detail" value="<%= locals.user && user.address ? user.address : '' %>" required oninput="updateAddressString()">
                             </div>
 
                             <div class="col-12">
@@ -105,26 +105,24 @@
                             <% }); %>
 
                             <div class="summary-row mt-3">
-                                <span>Tạm tính:</span>
+                                <span>Tiền hàng:</span>
                                 <span><%= totalAmount.toLocaleString('vi-VN') %> đ</span>
                             </div>
-                            <div class="summary-row" id="shippingRow" style="display: none;">
-                                <span>Phí vận chuyển (<span id="regionLabel">...</span>):</span>
-                                <span id="shippingFeeDisplay">0 đ</span>
+                            <div class="summary-row d-none" id="shippingFeeSummaryRow">
+                                <span>Phí vận chuyển <small class="text-muted fw-normal" id="regionNote"></small></span>
+                                <span id="shippingFeeDisplay">—</span>
                             </div>
-                            <% if (productDiscount > 0) { %>
-                                <div class="summary-row text-success">
-                                    <span>Giảm giá:</span>
-                                    <span>-<%= productDiscount.toLocaleString('vi-VN') %> đ</span>
-                                </div>
-                            <% } %>
+                            <div class="summary-row <%= productDiscount > 0 ? 'text-success' : '' %>">
+                                <span>Số tiền giảm giá:</span>
+                                <span><%= productDiscount > 0 ? '-' : '' %><%= productDiscount.toLocaleString('vi-VN') %> đ</span>
+                            </div>
 
                             <div class="summary-row summary-total">
-                                <span>Tổng cộng:</span>
+                                <span>Tổng thanh toán:</span>
                                 <span id="totalDisplay"><%= (totalAmount - productDiscount).toLocaleString('vi-VN') %> đ</span>
                             </div>
                         </div>
-                        <button type="submit" class="btn-confirm">XÁC NHẬN ĐẶT HÀNG</button>
+                        <button type="submit" class="btn-confirm">Đặt hàng</button>
                     </div>
                 </div>
             </div>
@@ -137,6 +135,7 @@
         const API_HOST = "https://provinces.open-api.vn/api/";
         const subtotal = <%= totalAmount %>;
         const discount = <%= productDiscount %>;
+        const FREE_SHIP_THRESHOLD = 500000;
 
         const regions = {
             north: ["Hà Nội", "Hà Giang", "Cao Bằng", "Bắc Kạn", "Tuyên Quang", "Lào Cai", "Điện Biên", "Lai Châu", "Sơn La", "Yên Bái", "Hoà Bình", "Thái Nguyên", "Lạng Sơn", "Quảng Ninh", "Bắc Giang", "Phú Thọ", "Vĩnh Phúc", "Bắc Ninh", "Hải Dương", "Hải Phòng", "Hưng Yên", "Thái Bình", "Hà Nam", "Nam Định", "Ninh Bình"],
@@ -152,33 +151,48 @@
             });
         });
 
+        function updateTotalWithShipping(fee) {
+            document.getElementById('totalDisplay').innerText = (subtotal + fee - discount).toLocaleString('vi-VN') + ' đ';
+        }
+
         function handleProvinceChange() {
             const select = document.getElementById('province');
             const provinceName = select.options[select.selectedIndex].text;
-            const shippingRow = document.getElementById('shippingRow');
+            const regionNote = document.getElementById('regionNote');
+            const shipRow = document.getElementById('shippingFeeSummaryRow');
 
             if (!select.value) {
-                shippingRow.style.display = 'none';
+                document.getElementById('province_name').value = '';
+                document.getElementById('shippingFeeInput').value = '0';
+                if (shipRow) shipRow.classList.add('d-none');
+                if (regionNote) regionNote.textContent = '';
+                document.getElementById('shippingFeeDisplay').innerText = '—';
+                updateTotalWithShipping(0);
+                loadDistricts();
                 return;
             }
 
             document.getElementById('province_name').value = provinceName;
-            let fee = 35000;
-            let label = "Ngoại tỉnh";
+            if (shipRow) shipRow.classList.remove('d-none');
 
-            if (regions.north.some(r => provinceName.includes(r))) {
-                fee = 45000; label = "Miền Bắc";
+            let fee = 35000;
+            let label = 'Ngoại tỉnh';
+
+            if (subtotal >= FREE_SHIP_THRESHOLD) {
+                fee = 0;
+                label = 'Miễn phí (đơn từ 500.000đ)';
+            } else if (regions.north.some(r => provinceName.includes(r))) {
+                fee = 45000; label = 'Miền Bắc';
             } else if (regions.central.some(r => provinceName.includes(r))) {
-                fee = 30000; label = "Miền Trung";
+                fee = 30000; label = 'Miền Trung';
             } else if (regions.south.some(r => provinceName.includes(r))) {
-                fee = 15000; label = "Miền Nam";
+                fee = 15000; label = 'Miền Nam';
             }
 
-            shippingRow.style.display = 'flex';
-            document.getElementById('regionLabel').innerText = label;
-            document.getElementById('shippingFeeInput').value = fee;
+            if (regionNote) regionNote.textContent = '(' + label + ')';
+            document.getElementById('shippingFeeInput').value = String(fee);
             document.getElementById('shippingFeeDisplay').innerText = fee.toLocaleString('vi-VN') + ' đ';
-            document.getElementById('totalDisplay').innerText = (subtotal + fee - discount).toLocaleString('vi-VN') + ' đ';
+            updateTotalWithShipping(fee);
 
             loadDistricts();
         }

@@ -75,6 +75,76 @@ class AdminOrderRepository {
         const [rows] = await db.query(query, [OrderStatus.COMPLETED, RevenueStats.DAYS_LOOKBACK]);
         return rows;
     }
+
+    /**
+     * Chuỗi doanh thu theo ngày hoặc tháng (chỉ đơn COMPLETED), trong [dateFrom, dateTo] (YYYY-MM-DD).
+     */
+    async getRevenueSeriesByRange(dateFrom, dateTo, groupBy = 'day') {
+        const status = OrderStatus.COMPLETED;
+        if (groupBy === 'month') {
+            const [rows] = await db.query(
+                `
+                SELECT
+                    DATE_FORMAT(order_date, '%Y-%m-01') AS period_date,
+                    SUM(final_total) AS revenue,
+                    COUNT(*) AS order_count
+                FROM orders
+                WHERE status = ?
+                  AND DATE(order_date) >= ?
+                  AND DATE(order_date) <= ?
+                GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+                ORDER BY period_date ASC
+                `,
+                [status, dateFrom, dateTo]
+            );
+            return rows.map((r) => ({
+                period_date: r.period_date,
+                revenue: Number(r.revenue) || 0,
+                order_count: Number(r.order_count) || 0
+            }));
+        }
+
+        const [rows] = await db.query(
+            `
+            SELECT
+                DATE(order_date) AS period_date,
+                SUM(final_total) AS revenue,
+                COUNT(*) AS order_count
+            FROM orders
+            WHERE status = ?
+              AND DATE(order_date) >= ?
+              AND DATE(order_date) <= ?
+            GROUP BY DATE(order_date)
+            ORDER BY period_date ASC
+            `,
+            [status, dateFrom, dateTo]
+        );
+        return rows.map((r) => ({
+            period_date: r.period_date,
+            revenue: Number(r.revenue) || 0,
+            order_count: Number(r.order_count) || 0
+        }));
+    }
+
+    /** Tổng doanh thu và số đơn hoàn thành trong khoảng ngày (YYYY-MM-DD). */
+    async getCompletedTotalsInRange(dateFrom, dateTo) {
+        const [rows] = await db.query(
+            `
+            SELECT
+                COALESCE(SUM(final_total), 0) AS total_revenue,
+                COUNT(*) AS total_orders
+            FROM orders
+            WHERE status = ?
+              AND DATE(order_date) >= ?
+              AND DATE(order_date) <= ?
+            `,
+            [OrderStatus.COMPLETED, dateFrom, dateTo]
+        );
+        return {
+            totalRevenue: Number(rows[0].total_revenue) || 0,
+            totalOrders: Number(rows[0].total_orders) || 0
+        };
+    }
 }
 
 module.exports = AdminOrderRepository;

@@ -13,8 +13,8 @@ class ProductService {
         return this.productRepository.getAllProducts(filters);
     }
 
-    async getProductById(id) {
-        return this.productRepository.getProductById(id);
+    async getProductById(id, options = {}) {
+        return this.productRepository.getProductById(id, options);
     }
 
     async getProductDetails(productId) {
@@ -45,6 +45,70 @@ class ProductService {
         if (type === 'new-arrivals') return this.productRepository.getNewArrivals();
         if (type === 'on-sale') return this.productRepository.getOnSaleProducts();
         return null;
+    }
+
+    async getShopCatalogProducts(filters) {
+        return this.productRepository.getShopCatalogProducts(filters);
+    }
+
+    async countShopCatalogProducts(filters) {
+        return this.productRepository.countShopCatalogProducts(filters);
+    }
+
+    async getShopCatalogPriceBounds() {
+        return this.productRepository.getShopCatalogPriceBounds();
+    }
+
+    enrichShopProduct(p) {
+        const price = Number(p.price);
+        const rawList = p.list_price;
+        const list = rawList != null && rawList !== '' ? Number(rawList) : null;
+        let discount_percent = null;
+        if (list != null && !Number.isNaN(list) && list > price && price >= 0) {
+            discount_percent = Math.min(99, Math.max(1, Math.round((1 - price / list) * 100)));
+        }
+        return {
+            ...p,
+            list_price: Number.isNaN(list) ? null : list,
+            discount_percent,
+            has_discount: discount_percent != null
+        };
+    }
+
+    _resolveImageUrl(fn) {
+        if (!fn) return null;
+        const s = String(fn).trim();
+        if (s.startsWith('http')) return s;
+        return '/images/' + s.replace(/^\/+/, '');
+    }
+
+    /** Chuẩn hóa phản hồi API trang chi tiết: gallery URL, nhãn tồn kho, giá khuyến mãi */
+    enrichProductDetail(raw) {
+        if (!raw) return null;
+        const base = this.enrichShopProduct(raw);
+        const gallery = [];
+        const main = this._resolveImageUrl(raw.image_url);
+        if (main) gallery.push(main);
+        if (raw.gallery_images) {
+            try {
+                const extra = typeof raw.gallery_images === 'string' ? JSON.parse(raw.gallery_images) : raw.gallery_images;
+                if (Array.isArray(extra)) {
+                    extra.forEach((fn) => {
+                        const u = this._resolveImageUrl(fn);
+                        if (u && !gallery.includes(u)) gallery.push(u);
+                    });
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        }
+        if (gallery.length === 0) gallery.push(main || '/images/default.jpg');
+        const qty = Number(raw.quantity) || 0;
+        return {
+            ...base,
+            gallery,
+            stock_label: qty > 0 ? `Còn ${qty} cuốn` : 'Hết hàng'
+        };
     }
 
     async getProductsByCategory(categoryId) {
@@ -99,6 +163,10 @@ class ProductService {
 
     async deleteProduct(id) {
         return this.adminProductService.deleteProduct(id);
+    }
+
+    async restoreProduct(id) {
+        return this.adminProductService.restoreProduct(id);
     }
 
     async importStock(id, quantityImport, note) {

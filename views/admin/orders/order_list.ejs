@@ -171,16 +171,15 @@
                                         <select class="form-select" name="status">
                                             <option value="all">Tất cả trạng thái</option>
                                             <option value="PENDING" <%=(typeof query !=='undefined' &&
-                                                query.status==='PENDING' ) ? 'selected' : '' %>>Chờ xác nhận</option>
+                                                query.status==='PENDING' ) ? 'selected' : '' %>>Chờ duyệt</option>
                                             <option value="CONFIRMED" <%=(typeof query !=='undefined' &&
-                                                query.status==='CONFIRMED' ) ? 'selected' : '' %>>Đã xác nhận</option>
+                                                query.status==='CONFIRMED' ) ? 'selected' : '' %>>Đã duyệt</option>
                                             <option value="PROCESSING" <%=(typeof query !=='undefined' &&
-                                                query.status==='PROCESSING' ) ? 'selected' : '' %>>Đang xử lý</option>
+                                                query.status==='PROCESSING' ) ? 'selected' : '' %>>Chuẩn bị hàng</option>
                                             <option value="SHIPPED" <%=(typeof query !=='undefined' &&
-                                                query.status==='SHIPPED' ) ? 'selected' : '' %>>Đã giao VC</option>
+                                                query.status==='SHIPPED' ) ? 'selected' : '' %>>Đang vận chuyển</option>
                                             <option value="DELIVERING" <%=(typeof query !=='undefined' &&
-                                                query.status==='DELIVERING' ) ? 'selected' : '' %>>Đang giao hàng
-                                            </option>
+                                                query.status==='DELIVERING' ) ? 'selected' : '' %>>Đang giao</option>
                                             <option value="COMPLETED" <%=(typeof query !=='undefined' &&
                                                 query.status==='COMPLETED' ) ? 'selected' : '' %>>Đã giao</option>
                                             <option value="CANCELLED" <%=(typeof query !=='undefined' &&
@@ -203,6 +202,12 @@
                                                 class="fas fa-search"></i> Tìm</button>
                                         <a href="/admin/orders" class="btn btn-outline-secondary" title="Reset"><i
                                                 class="fas fa-undo"></i></a>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <button type="button" class="btn btn-success btn-sm" id="btnExportOrdersExcel" title="Xuất .xlsx — Mã đơn, Khách hàng, Ngày đặt, Tổng tiền">
+                                            <i class="fas fa-file-excel me-1"></i> Xuất Excel (.xlsx)
+                                        </button>
+                                        <span class="text-muted small ms-2">Theo bộ lọc hiện tại</span>
                                     </div>
                                 </div>
                             </form>
@@ -235,7 +240,7 @@
                                     </thead>
                                     <tbody>
                                         <% if (orders && orders.length> 0) { %>
-                                            <% const statusMap = typeof statusLabels !== 'undefined' ? statusLabels : { 'PENDING':'Chờ xác nhận','CONFIRMED':'Đã xác nhận','PROCESSING':'Đang xử lý','SHIPPED':'Đã giao VC','DELIVERING':'Đang giao hàng','COMPLETED':'Đã giao','CANCELLED':'Đã hủy' }; %>
+                                            <% const statusMap = typeof statusLabels !== 'undefined' ? statusLabels : { 'PENDING':'Chờ duyệt','CONFIRMED':'Đã duyệt','PROCESSING':'Chuẩn bị hàng','SHIPPED':'Đang vận chuyển','DELIVERING':'Đang giao','COMPLETED':'Đã giao','CANCELLED':'Đã hủy' }; %>
                                                 <% orders.forEach(order=> { %>
                                                     <%
                                                         const statusText = statusMap[order.status] || order.status;
@@ -277,27 +282,37 @@
                                                                         <%= statusText %>
                                                                     </button>
                                                                     <ul class="dropdown-menu shadow">
-                                                                        <li><a class="dropdown-item"
-                                                                                href="/admin/orders/update/<%= order.id %>/CONFIRMED">Xác
-                                                                                nhận</a></li>
-                                                                        <li><a class="dropdown-item"
-                                                                                href="/admin/orders/update/<%= order.id %>/PROCESSING">Đóng
-                                                                                gói</a></li>
-                                                                        <li><a class="dropdown-item"
-                                                                                href="/admin/orders/update/<%= order.id %>/SHIPPED">Vận
-                                                                                chuyển</a></li>
-                                                                        <li><a class="dropdown-item"
-                                                                                href="/admin/orders/update/<%= order.id %>/DELIVERING">Đang
-                                                                                giao</a></li>
-                                                                        <li><a class="dropdown-item"
-                                                                                href="/admin/orders/update/<%= order.id %>/COMPLETED">Đã
-                                                                                giao</a></li>
-                                                                        <li>
-                                                                            <hr class="dropdown-divider">
-                                                                        </li>
+                                                                        <% const st = order.status; %>
+                                                                        <% if (st !== 'COMPLETED' && st !== 'CANCELLED') { %>
+                                                                        <% if (st === 'PENDING') { %>
+                                                                        <li><a class="dropdown-item fw-semibold"
+                                                                                href="/admin/orders/update/<%= order.id %>/CONFIRMED">Đã duyệt</a></li>
+                                                                        <% } %>
+                                                                        <% if (st === 'CONFIRMED') { %>
+                                                                        <li><a class="dropdown-item fw-semibold"
+                                                                                href="/admin/orders/update/<%= order.id %>/DELIVERING">Đang giao</a></li>
+                                                                        <li><h6 class="dropdown-header text-muted small mb-0">Thao tác khác</h6></li>
+                                                                        <li><a class="dropdown-item small"
+                                                                                href="/admin/orders/update/<%= order.id %>/PROCESSING">Chuẩn bị hàng</a></li>
+                                                                        <li><a class="dropdown-item small"
+                                                                                href="/admin/orders/update/<%= order.id %>/SHIPPED">Bàn giao vận chuyển</a></li>
+                                                                        <% } %>
+                                                                        <% if (st === 'PROCESSING' || st === 'SHIPPED') { %>
+                                                                        <li><a class="dropdown-item fw-semibold"
+                                                                                href="/admin/orders/update/<%= order.id %>/DELIVERING">Đang giao</a></li>
+                                                                        <li><a class="dropdown-item fw-semibold"
+                                                                                href="/admin/orders/update/<%= order.id %>/COMPLETED">Đã giao</a></li>
+                                                                        <% } %>
+                                                                        <% if (st === 'DELIVERING') { %>
+                                                                        <li><a class="dropdown-item fw-semibold"
+                                                                                href="/admin/orders/update/<%= order.id %>/COMPLETED">Đã giao</a></li>
+                                                                        <% } %>
+                                                                        <li><hr class="dropdown-divider"></li>
                                                                         <li><a class="dropdown-item text-danger"
-                                                                                href="/admin/orders/update/<%= order.id %>/CANCELLED">Hủy
-                                                                                / Thất bại</a></li>
+                                                                                href="/admin/orders/update/<%= order.id %>/CANCELLED">Hủy đơn</a></li>
+                                                                        <% } else { %>
+                                                                        <li><span class="dropdown-item-text small text-muted px-3">Không còn bước tiếp theo trong luồng giao hàng.</span></li>
+                                                                        <% } %>
                                                                     </ul>
                                                                 </div>
                                                             </td>
@@ -383,6 +398,17 @@
     <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
     <script>
         let currentOrderIdForModal = null;
+
+        (function () {
+            const filterForm = document.getElementById('filterForm');
+            const btnExport = document.getElementById('btnExportOrdersExcel');
+            if (btnExport && filterForm) {
+                btnExport.addEventListener('click', function () {
+                    const params = new URLSearchParams(new FormData(filterForm));
+                    window.location.href = '/admin/orders/export?' + params.toString();
+                });
+            }
+        })();
 
         // Xử lý Checkbox
         const selectAll = document.getElementById('selectAll');
@@ -481,11 +507,11 @@
                         });
 
                         const statusMap = {
-                            'PENDING': 'Chờ xác nhận',
-                            'CONFIRMED': 'Đã xác nhận',
-                            'PROCESSING': 'Đang xử lý',
-                            'SHIPPED': 'Đã giao VC',
-                            'DELIVERING': 'Đang giao hàng',
+                            'PENDING': 'Chờ duyệt',
+                            'CONFIRMED': 'Đã duyệt',
+                            'PROCESSING': 'Chuẩn bị hàng',
+                            'SHIPPED': 'Đang vận chuyển',
+                            'DELIVERING': 'Đang giao',
                             'COMPLETED': 'Đã giao',
                             'CANCELLED': 'Đã hủy'
                         };

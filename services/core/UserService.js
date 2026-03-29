@@ -28,6 +28,18 @@ class UserService {
         return this.adminUserService.getAllUsers();
     }
 
+    async countUsers(search) {
+        return this.adminUserService.countUsers(search);
+    }
+
+    async getUsersPaginated(options) {
+        return this.adminUserService.getUsersPaginated(options);
+    }
+
+    async setUserActive(id, isActive) {
+        return this.adminUserService.setUserActive(id, isActive);
+    }
+
     async deleteUser(id) {
         return this.adminUserService.deleteUser(id);
     }

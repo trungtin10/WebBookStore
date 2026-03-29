@@ -11,6 +11,8 @@ class AuthController {
     }
 
     initializeRoutes() {
+        this.router.get('/login', this.showLogin.bind(this));
+        this.router.get('/register', this.showRegister.bind(this));
         this.router.post('/login', this.login.bind(this));
         this.router.post('/register', this.register.bind(this));
         this.router.get('/auth/logout', this.logout.bind(this));
@@ -26,6 +28,20 @@ class AuthController {
         this.router.post('/admin/change-password', requireAdmin, this.processChangePassword.bind(this));
     }
 
+    showLogin(req, res) {
+        res.render('auth/login', {
+            loginError: req.query.loginError || null,
+            registerSuccess: req.query.registerSuccess || null,
+            prefillUsername: typeof req.query.username === 'string' ? req.query.username : ''
+        });
+    }
+
+    showRegister(req, res) {
+        res.render('auth/register', {
+            registerError: req.query.registerError || null
+        });
+    }
+
     async login(req, res) {
         const username = req.body.username ? req.body.username.trim() : '';
         const { password, returnUrl } = req.body;
@@ -33,9 +49,14 @@ class AuthController {
 
         try {
             const result = await this.authService.authenticateUserWeb(username, password);
+            if (result && result.locked) {
+                const lockedMsg = encodeURIComponent('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.');
+                const qs = `loginError=${lockedMsg}&username=${encodeURIComponent(username)}`;
+                return res.redirect(returnUrl ? `${returnUrl}?${qs}` : `/login?${qs}`);
+            }
             if (!result) {
                 const qs = `loginError=${genericError}&username=${encodeURIComponent(username)}`;
-                return res.redirect(returnUrl ? `${returnUrl}?${qs}` : `/?${qs}`);
+                return res.redirect(returnUrl ? `${returnUrl}?${qs}` : `/login?${qs}`);
             }
 
             res.cookie('jwt', result.token, { httpOnly: true, maxAge: 24 * 60 * 60 * 1000, path: '/' });
@@ -61,7 +82,7 @@ class AuthController {
             return res.redirect(returnUrl || '/');
         } catch (err) {
             console.error(err);
-            return res.redirect('/?loginError=' + encodeURIComponent("Lỗi hệ thống!"));
+            return res.redirect('/login?loginError=' + encodeURIComponent("Lỗi hệ thống!"));
         }
     }
 
@@ -69,12 +90,12 @@ class AuthController {
         try {
             const result = await this.authService.registerUserWeb(req.body);
             if (!result.success) {
-                return res.redirect(`/?registerError=${encodeURIComponent(result.errors.join(' '))}`);
+                return res.redirect(`/register?registerError=${encodeURIComponent(result.errors.join(' '))}`);
             }
-            return res.redirect('/?registerSuccess=Đăng ký thành công! Vui lòng đăng nhập.');
+            return res.redirect('/login?registerSuccess=' + encodeURIComponent('Đăng ký thành công! Vui lòng đăng nhập.'));
         } catch (err) {
             console.error('Lỗi đăng ký:', err);
-            return res.redirect('/?registerError=Lỗi khi đăng ký!');
+            return res.redirect('/register?registerError=' + encodeURIComponent('Lỗi khi đăng ký!'));
         }
     }
 
@@ -136,7 +157,10 @@ class AuthController {
             if (!result.success) {
                 return res.render('auth/forgot_password', { error: result.error });
             }
-            res.render('auth/forgot_password', { success: `Đã gửi email hướng dẫn đến ${result.email}. Vui lòng kiểm tra hộp thư.` });
+            const mins = result.validMinutes != null ? result.validMinutes : 15;
+            res.render('auth/forgot_password', {
+                success: `Đã gửi email chứa mã xác nhận và liên kết khôi phục đến ${result.email}. Mã có hiệu lực ${mins} phút. Vui lòng kiểm tra hộp thư (và thư mục spam).`
+            });
         } catch (err) {
             console.error(err);
             res.render('auth/forgot_password', { error: 'Lỗi hệ thống, vui lòng thử lại sau.' });
@@ -147,7 +171,7 @@ class AuthController {
         try {
             const user = await this.authService.verifyResetToken(req.params.token);
             if (!user) {
-                return res.render('auth/reset_password', { error: 'Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.', token: null });
+                return res.render('auth/reset_password', { error: 'Liên kết hoặc mã xác nhận không hợp lệ hoặc đã hết hạn (15 phút).', token: null });
             }
             res.render('auth/reset_password', { token: req.params.token });
         } catch (err) {

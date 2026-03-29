@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Trang chủ Bookstore</title>
     <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -64,14 +65,21 @@
             function renderProducts(items, append = false) {
                 const html = items.map(item => {
                     let imgSrc = item.image_url && !item.image_url.startsWith('http') ? '/images/' + item.image_url : (item.image_url || '/images/default.jpg');
+                    const badge = item.has_discount
+                        ? `<span class="product-discount-badge" style="position:absolute;top:8px;left:8px;z-index:2;">-${item.discount_percent}%</span>`
+                        : '';
+                    const priceRow = item.has_discount && item.list_price
+                        ? `<div class="product-price-row" style="justify-content:center;"><span class="product-price-old">${Number(item.list_price).toLocaleString('vi-VN')} đ</span><span class="home-product-price" style="margin:0;">${Number(item.price).toLocaleString('vi-VN')} đ</span></div>`
+                        : `<div class="home-product-price">${Number(item.price).toLocaleString('vi-VN')} đ</div>`;
                     return `<div class="col">
                         <a href="/product/${item.id}" class="home-product-card">
-                            <div class="home-product-img-wrap">
+                            <div class="home-product-img-wrap" style="position:relative;">
+                                ${badge}
                                 <img src="${imgSrc}" class="home-product-img" alt="${item.name}" onerror="this.src='https://picsum.photos/300/400?random=${item.id}'">
                             </div>
                             <div class="home-product-body">
                                 <div class="home-product-title" title="${item.name}">${item.name}</div>
-                                <div class="home-product-price">${Number(item.price).toLocaleString('vi-VN')} đ</div>
+                                ${priceRow}
                                 <div class="home-product-stars">
                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
                                 </div>
@@ -111,7 +119,8 @@
                             return;
                         }
 
-                        const items = data.data;
+                        const payload = data.data;
+                        const items = Array.isArray(payload) ? payload : (payload.items || []);
                         if (initial && items.length === 0) {
                             emptyEl.classList.remove('d-none');
                             loadMoreWrapEl.classList.add('d-none');
@@ -125,7 +134,8 @@
                         renderProducts(items, !initial);
                         offset += items.length;
 
-                        if (items.length < pageSize) {
+                        const noMore = payload.hasMore === false || items.length < pageSize;
+                        if (noMore) {
                             loadMoreWrapEl.classList.add('d-none');
                         } else {
                             loadMoreWrapEl.classList.remove('d-none');

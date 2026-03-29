@@ -3,6 +3,7 @@ const path = require('path');
 const multer = require('multer');
 const ProductService = require('../../../services/shop/ProductService');
 const ProductValidator = require('../../../validators/ProductValidator');
+const { finalizeProductImage } = require('../../../utils/productImageUpload');
 const { requireAdmin } = require('../../../middleware/auth.middleware');
 
 const storage = multer.diskStorage({
@@ -33,6 +34,7 @@ class AdminProductController {
         this.router.post('/edit/:id', requireAdmin, upload.single('image'), this.processEdit.bind(this));
         this.router.get('/detail/:id', requireAdmin, this.getDetail.bind(this));
         this.router.get('/delete/:id', requireAdmin, this.deleteProduct.bind(this));
+        this.router.get('/restore/:id', requireAdmin, this.restoreProduct.bind(this));
     }
 
     async getList(req, res) {
@@ -43,6 +45,8 @@ class AdminProductController {
                 keyword: req.query.keyword || '',
                 category_id: req.query.category_id || '',
                 status: req.query.status || 'all',
+                admin_list: true,
+                show_deleted: req.query.deleted === '1' ? '1' : '0',
                 limit,
                 offset: (page - 1) * limit
             };
@@ -56,7 +60,7 @@ class AdminProductController {
             res.render('admin/products/product_list', {
                 products,
                 categories,
-                query: filters,
+                query: { ...filters, deleted: req.query.deleted === '1' ? '1' : '' },
                 currentPage: page,
                 totalPages: Math.ceil(totalProducts / limit)
             });
@@ -83,7 +87,8 @@ class AdminProductController {
                 return res.redirect('/admin/products/add?error=' + encodeURIComponent(validation.message));
             }
 
-            const data = this.productValidator.parseProductData(req.body, req.file, false);
+            const data = this.productValidator.parseProductData(req.body, null, false);
+            if (req.file) data.image_url = await finalizeProductImage(req.file);
             await this.productService.createProduct(data);
             return res.redirect('/admin/products?success=' + encodeURIComponent('Thêm thành công'));
         } catch (err) {
@@ -95,7 +100,7 @@ class AdminProductController {
     async getEditForm(req, res) {
         try {
             const [product, categories] = await Promise.all([
-                this.productService.getProductById(req.params.id),
+                this.productService.getProductById(req.params.id, { includeDeleted: true }),
                 this.productService.getCategories()
             ]);
             if (!product) return res.status(404).send("Không tìm thấy sản phẩm này");
@@ -114,6 +119,7 @@ class AdminProductController {
             }
 
             const data = this.productValidator.parseProductData(req.body, req.file, true);
+            if (req.file) data.image_url = await finalizeProductImage(req.file);
             await this.productService.updateProduct(req.params.id, data);
             return res.redirect('/admin/products?success=' + encodeURIComponent('Cập nhật thành công'));
         } catch (err) {
@@ -124,7 +130,7 @@ class AdminProductController {
 
     async getDetail(req, res) {
         try {
-            const product = await this.productService.getProductById(req.params.id);
+            const product = await this.productService.getProductById(req.params.id, { includeDeleted: true });
             if (!product) return res.status(404).send("Không tìm thấy sản phẩm này");
             res.render('admin/products/product_detail', { item: product });
         } catch (err) {
@@ -136,10 +142,22 @@ class AdminProductController {
     async deleteProduct(req, res) {
         try {
             await this.productService.deleteProduct(req.params.id);
-            return res.redirect('/admin/products?success=' + encodeURIComponent('Xóa sản phẩm thành công'));
+            const msg = encodeURIComponent('Đã ẩn sản phẩm khỏi cửa hàng (xóa mềm). Có thể khôi phục trong mục Đã xóa mềm.');
+            return res.redirect('/admin/products?success=' + msg);
         } catch (err) {
             console.error(err);
-            res.status(500).send("Lỗi khi xóa sản phẩm");
+            res.status(500).send(err.message || 'Lỗi khi xóa sản phẩm');
+        }
+    }
+
+    async restoreProduct(req, res) {
+        try {
+            await this.productService.restoreProduct(req.params.id);
+            const msg = encodeURIComponent('Đã khôi phục sản phẩm.');
+            return res.redirect('/admin/products?deleted=1&success=' + msg);
+        } catch (err) {
+            console.error(err);
+            res.status(500).send(err.message || 'Lỗi khi khôi phục sản phẩm');
         }
     }
 }

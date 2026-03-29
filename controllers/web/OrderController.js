@@ -1,6 +1,7 @@
 const express = require('express');
 const OrderService = require('../../services/shop/OrderService');
 const NotificationService = require('../../services/core/NotificationService');
+const { OrderStatusLabels } = require('../../constants');
 const { requireLogin } = require('../../middleware/auth.middleware');
 
 class OrderController {
@@ -17,6 +18,8 @@ class OrderController {
         this.router.post('/order', this.createOrder.bind(this));
         this.router.get('/order/success/:id', this.showOrderSuccess.bind(this));
         this.router.get('/orders', this.getOrderHistory.bind(this));
+        this.router.get('/orders/status-updates', requireLogin, this.getOrderStatusUpdates.bind(this));
+        this.router.get('/orders/:id', this.showOrderDetail.bind(this));
         this.router.post('/payment/confirm', this.processPayment.bind(this));
     }
 
@@ -28,11 +31,13 @@ class OrderController {
         if (!selectedIds || selectedIds.length === 0) return res.redirect('/cart');
 
         const checkoutItems = cart.filter(item => selectedIds.includes(item.id.toString()));
-        const totalAmount = checkoutItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const totalAmount = checkoutItems.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
         const productDiscount = parseFloat(req.body.product_discount) || 0;
         const shippingFee = totalAmount > 500000 ? 0 : 30000;
+        const couponCodeRaw = req.body.coupon_code;
+        const couponCode = typeof couponCodeRaw === 'string' && couponCodeRaw.trim() ? couponCodeRaw.trim().slice(0, 64) : null;
 
-        res.cookie('checkoutData', JSON.stringify({ items: checkoutItems, totalAmount, productDiscount, shippingFee }), { maxAge: 10 * 60 * 1000 });
+        res.cookie('checkoutData', JSON.stringify({ items: checkoutItems, totalAmount, productDiscount, shippingFee, couponCode }), { maxAge: 10 * 60 * 1000 });
         res.redirect('/checkout');
     }
 
@@ -48,8 +53,8 @@ class OrderController {
         res.render('checkout/checkout', {
             cart: checkoutData.items,
             totalAmount: checkoutData.totalAmount,
-            productDiscount: checkoutData.productDiscount,
-            shippingFee: checkoutData.shippingFee
+            productDiscount: Number(checkoutData.productDiscount) || 0,
+            shippingFee: Number(checkoutData.shippingFee) || 0
         });
     }
 
@@ -66,10 +71,18 @@ class OrderController {
         const { full_name, phone, email, address, note, payment_method } = req.body;
         const shippingAddress = `${full_name}, ${phone}, ${address} (${note})`;
 
+        let shippingFee = Number(checkoutData.shippingFee);
+        if (!Number.isFinite(shippingFee) || shippingFee < 0) shippingFee = 0;
+        const fromForm = parseFloat(req.body.shipping_fee);
+        if (Number.isFinite(fromForm) && fromForm >= 0 && fromForm <= 500000) {
+            shippingFee = Math.round(fromForm);
+        }
+        const checkoutPayload = { ...checkoutData, shippingFee };
+
         try {
             const { orderId, finalTotal, paymentMethod } = await this.orderService.createOrderFromCheckout(
                 res.locals.user.id,
-                checkoutData,
+                checkoutPayload,
                 shippingAddress,
                 payment_method
             );
@@ -87,6 +100,10 @@ class OrderController {
             res.redirect(`/order/success/${orderId}`);
         } catch (err) {
             console.error(err);
+            const msg = err && err.message ? String(err.message) : '';
+            if (msg && (msg.includes('Mã giảm giá') || msg.includes('không tồn tại') || msg.includes('đủ số lượng') || msg.includes('Không có sản phẩm'))) {
+                return res.redirect('/cart?error=' + encodeURIComponent(msg));
+            }
             res.status(500).send("Lỗi khi đặt hàng");
         }
     }
@@ -100,10 +117,42 @@ class OrderController {
         if (!res.locals.user) return res.redirect('/?loginError=' + encodeURIComponent('Vui lòng đăng nhập'));
         try {
             const orders = await this.orderService.getOrdersByUserId(res.locals.user.id);
-            res.render('orders/order_history', { orders });
+            res.render('orders/order_history', { orders, OrderStatusLabels });
         } catch (err) {
             console.error(err);
             res.status(500).send("Lỗi lấy lịch sử đơn hàng");
+        }
+    }
+
+    async showOrderDetail(req, res) {
+        if (!res.locals.user) return res.redirect('/?loginError=' + encodeURIComponent('Vui lòng đăng nhập'));
+        const id = parseInt(req.params.id, 10);
+        if (!Number.isFinite(id) || id < 1) return res.status(404).render('pages/page', { title: 'Không tìm thấy', content: '<p class="p-4">Mã đơn hàng không hợp lệ.</p>' });
+
+        try {
+            const order = await this.orderService.getOrderById(id);
+            if (!order) return res.status(404).render('pages/page', { title: 'Không tìm thấy', content: '<p class="p-4">Không tìm thấy đơn hàng.</p>' });
+            if (Number(order.user_id) !== Number(res.locals.user.id)) {
+                return res.status(403).render('pages/page', { title: 'Không có quyền', content: '<p class="p-4">Bạn không có quyền xem đơn hàng này.</p>' });
+            }
+            const items = await this.orderService.getOrderItems(id);
+            res.render('orders/order_detail', { order, items, OrderStatusLabels });
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Lỗi tải chi tiết đơn hàng');
+        }
+    }
+
+    async getOrderStatusUpdates(req, res) {
+        try {
+            const orders = await this.orderService.getOrdersByUserId(res.locals.user.id);
+            res.json({
+                success: true,
+                orders: orders.map(o => ({ id: o.id, status: o.status }))
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: 'Không tải được trạng thái đơn hàng' });
         }
     }
 

@@ -80,15 +80,16 @@ class AdminOrderController {
     }
 
     getStatusNotification(newStatus, orderId) {
+        const label = OrderStatusLabels[newStatus] || newStatus;
         const map = {
-            CONFIRMED: { title: 'Đơn hàng đã được xác nhận', message: `Đơn hàng #${orderId} của bạn đã được xác nhận.`, type: 'info' },
-            PROCESSING: { title: 'Đang xử lý đơn hàng', message: `Đơn hàng #${orderId} đang được đóng gói.`, type: 'info' },
-            SHIPPED: { title: 'Đã giao cho vận chuyển', message: `Đơn hàng #${orderId} đã được bàn giao cho đơn vị vận chuyển.`, type: 'info' },
-            DELIVERING: { title: 'Đang giao hàng', message: `Shipper đang giao đơn hàng #${orderId} đến bạn.`, type: 'warning' },
-            COMPLETED: { title: 'Giao hàng thành công', message: `Đơn hàng #${orderId} đã hoàn tất. Cảm ơn bạn đã mua sắm!`, type: 'success' },
+            CONFIRMED: { title: 'Đơn hàng đã được duyệt', message: `Đơn hàng #${orderId} của bạn đã được duyệt (${label}).`, type: 'info' },
+            PROCESSING: { title: 'Đang chuẩn bị hàng', message: `Đơn hàng #${orderId} đang được chuẩn bị.`, type: 'info' },
+            SHIPPED: { title: 'Đang vận chuyển', message: `Đơn hàng #${orderId} đang được vận chuyển.`, type: 'info' },
+            DELIVERING: { title: 'Đang giao hàng', message: `Đơn hàng #${orderId} đang được giao đến bạn.`, type: 'warning' },
+            COMPLETED: { title: 'Đã giao hàng', message: `Đơn hàng #${orderId} đã giao thành công. Cảm ơn bạn đã mua sắm!`, type: 'success' },
             CANCELLED: { title: 'Đơn hàng bị hủy', message: `Đơn hàng #${orderId} đã bị hủy.`, type: 'danger' }
         };
-        return map[newStatus] || { title: 'Cập nhật đơn hàng', message: `Đơn hàng #${orderId} đã thay đổi trạng thái.`, type: 'info' };
+        return map[newStatus] || { title: 'Cập nhật đơn hàng', message: `Đơn hàng #${orderId}: ${label}.`, type: 'info' };
     }
 
     async updatePaymentStatus(req, res) {
@@ -138,6 +139,17 @@ class AdminOrderController {
         }
     }
 
+    _customerNameForExport(order) {
+        let name = order.full_name;
+        if (order.shipping_address) {
+            const parts = order.shipping_address.split(',').map((p) => p.trim());
+            if (parts.length >= 2 && (!name || name === 'Khách vãng lai')) {
+                name = parts[0];
+            }
+        }
+        return name || 'Khách vãng lai';
+    }
+
     async exportExcel(req, res) {
         try {
             const filters = {
@@ -148,39 +160,44 @@ class AdminOrderController {
             const orders = await this.orderService.getFilteredOrders(filters);
 
             const workbook = new exceljs.Workbook();
-            const worksheet = workbook.addWorksheet('Danh Sách Đơn Hàng');
-            worksheet.columns = [
-                { header: 'Mã ĐH', key: 'id', width: 10 },
-                { header: 'Khách Hàng', key: 'full_name', width: 25 },
-                { header: 'Số Điện Thoại', key: 'phone', width: 15 },
-                { header: 'Địa Chỉ', key: 'address', width: 40 },
-                { header: 'Tổng Tiền', key: 'total', width: 15 },
-                { header: 'Trạng Thái', key: 'status', width: 20 },
-                { header: 'Thanh Toán', key: 'payment_status', width: 15 },
-                { header: 'Ngày Đặt', key: 'order_date', width: 20 }
-            ];
-
-            orders.forEach(order => {
-                worksheet.addRow({
-                    id: '#' + order.id,
-                    full_name: order.full_name || 'Khách Vãng Lai',
-                    phone: order.phone || '',
-                    address: order.shipping_address || '',
-                    total: Number(order.final_total).toLocaleString('vi-VN') + ' đ',
-                    status: OrderStatusLabels[order.status] || order.status,
-                    payment_status: order.payment_status === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán',
-                    order_date: new Date(order.order_date).toLocaleString('vi-VN')
-                });
+            workbook.creator = 'BookTotal Admin';
+            const worksheet = workbook.addWorksheet('Đơn hàng', {
+                views: [{ state: 'frozen', ySplit: 1 }]
             });
+
+            worksheet.addRow(['Mã đơn', 'Khách hàng', 'Ngày đặt', 'Tổng tiền']);
             worksheet.getRow(1).font = { bold: true };
 
+            orders.forEach((order) => {
+                worksheet.addRow([
+                    order.id,
+                    this._customerNameForExport(order),
+                    order.order_date ? new Date(order.order_date) : null,
+                    Number(order.final_total) || 0
+                ]);
+            });
+
+            worksheet.getColumn(1).width = 12;
+            worksheet.getColumn(2).width = 30;
+            worksheet.getColumn(3).width = 20;
+            worksheet.getColumn(4).width = 16;
+            worksheet.getColumn(3).numFmt = 'dd/mm/yyyy hh:mm';
+            worksheet.getColumn(4).numFmt = '#,##0';
+
+            if (orders.length > 0) {
+                worksheet.autoFilter = {
+                    from: { row: 1, column: 1 },
+                    to: { row: 1, column: 4 }
+                };
+            }
+
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', 'attachment; filename=Danh_Sach_Don_Hang.xlsx');
+            res.setHeader('Content-Disposition', 'attachment; filename=Bao_cao_don_hang.xlsx');
             await workbook.xlsx.write(res);
             res.end();
         } catch (err) {
             console.error(err);
-            res.status(500).send("Lỗi xuất file Excel");
+            res.status(500).send('Lỗi xuất file Excel');
         }
     }
 }

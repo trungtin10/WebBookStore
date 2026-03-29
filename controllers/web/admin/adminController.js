@@ -26,7 +26,7 @@ class AdminController {
 
     async getStats(req, res) {
         try {
-            const data = await this.dashboardService.getStatsPage();
+            const data = await this.dashboardService.getStatsPage(req.query);
             res.render('admin/dashboard/stats', data);
         } catch (err) {
             console.error(err);
