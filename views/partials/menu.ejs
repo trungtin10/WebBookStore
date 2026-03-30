@@ -1,0 +1,559 @@
+<%- include('pwa') %>
+<link rel="stylesheet" href="/css/layout.css">
+<link rel="stylesheet" href="/css/site-menu.css">
+
+<div id="centerNotice" class="center-notice" role="status" aria-live="polite"></div>
+
+<!-- Global popup modal -->
+<div class="modal fade" id="globalPopupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-2">
+                    <div id="globalPopupIcon" class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                        style="width:40px;height:40px;background:rgba(25,135,84,.12);color:#198754;">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h5 class="modal-title fw-bold mb-0" id="globalPopupTitle">Thông báo</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <div id="globalPopupMessage" class="text-muted" style="line-height:1.55;"></div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <div class="d-flex flex-wrap gap-2 w-100 justify-content-end" id="globalPopupActions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HEADER WRAPPER (Gom nhóm để sticky) -->
+<div class="header-wrapper">
+
+    <!-- ADMIN BANNER -->
+    <% if (locals.user && user.role === 'admin') { %>
+        <div class="admin-mode-banner">
+            <i class="fas fa-eye me-2"></i> Bạn đang xem website dưới quyền <b>Quản trị viên</b>.
+            <a href="/admin" class="ms-2">Quay lại Dashboard</a>
+        </div>
+    <% } %>
+
+    <!-- MAIN HEADER -->
+    <div class="main-header">
+        <div class="container header-content">
+            <a href="/" class="brand-logo">BOOKTOTAL</a>
+
+            <form action="/search" method="GET" class="search-container">
+                <input type="text" name="q" class="search-input" placeholder="Tìm kiếm sách, tác giả..." required>
+                <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+            </form>
+
+            <div class="header-actions">
+                <!-- Admin Link -->
+                <% if (locals.user && user.role === 'admin') { %>
+                    <a href="/admin" class="action-item">
+                        <i class="fas fa-user-shield" style="color: #c49b63;"></i>
+                        <span style="color: #c49b63;">Quản trị</span>
+                    </a>
+                <% } %>
+
+                <!-- Notifications -->
+                <div class="action-item">
+                    <% if (locals.user) { %>
+                        <a href="/notifications" class="text-decoration-none text-dark d-flex flex-column align-items-center">
+                            <i class="far fa-bell"></i>
+                            <span>Thông báo</span>
+                            <% if (locals.unreadNotifications && unreadNotifications > 0) { %>
+                                <span class="cart-badge bg-danger"><%= unreadNotifications > 99 ? '99+' : unreadNotifications %></span>
+                            <% } %>
+                        </a>
+                        <div class="dropdown-menu-custom notif-dropdown">
+                            <div class="notif-header">Thông báo mới nhận</div>
+                            <div class="notif-list">
+                                <% if (locals.recentNotifications && recentNotifications.length > 0) { %>
+                                    <% recentNotifications.forEach(notif => {
+                                        let iconClass = 'bg-info text-white';
+                                        let iconName = 'fa-info';
+                                        if (notif.type === 'success') { iconClass = 'bg-success text-white'; iconName = 'fa-check'; }
+                                        else if (notif.type === 'warning') { iconClass = 'bg-warning text-dark'; iconName = 'fa-exclamation'; }
+                                        else if (notif.type === 'danger') { iconClass = 'bg-danger text-white'; iconName = 'fa-times'; }
+                                    %>
+                                        <a href="/notifications" class="notif-item <%= notif.is_read ? '' : 'unread' %>">
+                                            <div class="notif-icon <%= iconClass %>"><i class="fas <%= iconName %>"></i></div>
+                                            <div class="notif-content">
+                                                <div class="notif-title"><%= notif.title %></div>
+                                                <div class="notif-desc"><%= notif.message %></div>
+                                            </div>
+                                        </a>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center py-4 text-muted small">Chưa có thông báo nào.</div>
+                                <% } %>
+                            </div>
+                            <div class="notif-footer"><a href="/notifications">Xem tất cả</a></div>
+                        </div>
+                    <% } else { %>
+                        <div class="d-flex flex-column align-items-center" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            <i class="far fa-bell"></i>
+                            <span>Thông báo</span>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Cart -->
+                <div class="action-item">
+                    <a href="/cart" class="text-decoration-none text-dark d-flex flex-column align-items-center">
+                        <i class="fas fa-shopping-bag"></i>
+                        <span>Giỏ hàng</span>
+                        <span class="cart-badge" id="cartBadgeCount" style="<%= (locals.cartCount && cartCount > 0) ? '' : 'display: none;' %>">
+                            <%= (locals.cartCount && cartCount > 99) ? '99+' : (locals.cartCount || 0) %>
+                        </span>
+                    </a>
+                    <div class="dropdown-menu-custom cart-dropdown" id="cartDropdownContent">
+                        <% if (locals.cart && cart.length > 0) { %>
+                            <div class="cart-list" id="cartDropdownList">
+                                <% cart.slice(0, 5).forEach(item => { %>
+                                    <div class="cart-item-row">
+                                        <%
+                                            let imgSrc = item.image_url;
+                                            if (imgSrc && !imgSrc.startsWith('http')) imgSrc = '/images/' + imgSrc;
+                                        %>
+                                        <img src="<%= imgSrc || '/images/default.jpg' %>" class="cart-img" onerror="this.src='https://picsum.photos/50/70'">
+                                        <div class="cart-info">
+                                            <div class="cart-name"><%= item.name %></div>
+                                            <div class="d-flex justify-content-between">
+                                                <span class="small text-muted">x<%= item.quantity %></span>
+                                                <span class="cart-price"><%= Number(item.price).toLocaleString('vi-VN') %> đ</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                            <div class="cart-footer">
+                                <div class="cart-total-row">
+                                    <span>Tổng cộng:</span>
+                                    <%
+                                        let total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                                    %>
+                                    <span class="cart-total-val" id="cartDropdownTotal"><%= total.toLocaleString('vi-VN') %> đ</span>
+                                </div>
+                                <% if (locals.user && user.role === 'admin') { %>
+                                    <button class="btn-view-cart bg-secondary" disabled>Admin không thể mua hàng</button>
+                                <% } else { %>
+                                    <a href="/cart" class="btn-view-cart">Xem giỏ hàng</a>
+                                <% } %>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-5">
+                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                <p class="text-muted small mb-0">Giỏ hàng trống</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- User -->
+                <div class="action-item">
+                    <i class="fas fa-user-circle"></i>
+                    <span><%= locals.user ? (user.full_name || user.username) : 'Tài khoản' %></span>
+                    <div class="dropdown-menu-custom user-dropdown">
+                        <% if (locals.user) { %>
+                            <div class="text-center mb-2 pb-2 border-bottom">
+                                <div class="fw-bold text-dark"><%= user.username %></div>
+                                <div class="small text-muted"><%= user.role === 'admin' ? 'Quản trị viên' : 'Thành viên' %></div>
+                            </div>
+                            <a href="/profile" class="user-menu-link">
+                                <i class="fas fa-user me-2"></i> Thông tin tài khoản
+                            </a>
+                            <% if (user.role !== 'admin') { %>
+                                <a href="/orders" class="user-menu-link"><i class="fas fa-box-open me-2"></i> Kiểm tra đơn hàng</a>
+                            <% } %>
+                            <a href="/auth/logout" class="user-menu-link text-danger"><i class="fas fa-sign-out-alt me-2"></i> Đăng xuất</a>
+                        <% } else { %>
+                            <a href="javascript:void(0)" class="user-menu-link" data-bs-toggle="modal" data-bs-target="#loginModal">Đăng nhập</a>
+                            <a href="javascript:void(0)" class="user-menu-link" data-bs-toggle="modal" data-bs-target="#registerModal">Đăng ký</a>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION BAR -->
+    <div class="nav-bar">
+        <div class="container nav-container">
+            <div class="cat-menu-btn">
+                <i class="fas fa-bars"></i> Danh mục sản phẩm
+                <div class="cat-dropdown">
+                    <% if (locals.globalCategories && globalCategories.length > 0) { %>
+                        <% globalCategories.forEach(cat => { %>
+                            <a href="/category/<%= cat.id %>" class="cat-item"><%= cat.name %></a>
+                        <% }); %>
+                    <% } else { %>
+                        <a href="#" class="cat-item">Văn học</a>
+                        <a href="#" class="cat-item">Kinh tế</a>
+                    <% } %>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="/" class="nav-link-item">Trang chủ</a>
+                <a href="/best-sellers" class="nav-link-item">Sách bán chạy</a>
+                <a href="/new-arrivals" class="nav-link-item">Sách mới</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals (Login/Register) -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-hidden="true" aria-labelledby="loginModalTitle">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable auth-modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h3 class="modal-title visually-hidden" id="loginModalTitle">Đăng nhập</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body pb-4 pb-md-5 pt-0">
+                <h3 class="text-center fw-bold mb-3 mb-md-4" style="color: #1a1a2e;">ĐĂNG NHẬP</h3>
+                <div id="loginAlert" class="alert d-none" role="alert"></div>
+                <form action="/login" method="POST" autocomplete="off" data-auth-form="login">
+                    <input type="hidden" name="returnUrl" value="">
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="loginUsername">Tên đăng nhập</label>
+                        <input type="text" class="form-control" name="username" id="loginUsername" autocomplete="username" autocapitalize="off">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="loginPassword">Mật khẩu</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="password" id="loginPassword" autocomplete="current-password">
+                            <button type="button" class="btn btn-outline-secondary toggle-password" aria-label="Hiển thị mật khẩu" aria-pressed="false">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                        <div class="text-end mt-1">
+                            <a href="/forgot-password" class="text-decoration-none small text-muted">Quên mật khẩu?</a>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn text-white fw-bold py-2" style="background-color: #1a1a2e;">Đăng nhập</button>
+                    </div>
+                </form>
+                <div class="text-center mt-3">
+                    <p class="small mb-0">Chưa có tài khoản? <a href="javascript:void(0)" class="text-decoration-none" style="color: #c49b63;" id="switchToRegister">Đăng ký ngay</a></p>
+                    <p class="small mt-2 mb-0"><a href="/login" class="text-muted">Mở trang đăng nhập đầy đủ</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true" aria-labelledby="registerModalTitle">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable auth-modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h3 class="modal-title visually-hidden" id="registerModalTitle">Đăng ký</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body pb-4 pb-md-5 pt-0">
+                <h3 class="text-center fw-bold mb-3 mb-md-4" style="color: #1a1a2e;">ĐĂNG KÝ</h3>
+                <div id="registerAlert" class="alert alert-danger d-none" role="alert"></div>
+                <form action="/register" method="POST" autocomplete="off" data-auth-form="register">
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regFullName">Họ và tên</label>
+                        <input type="text" class="form-control" name="full_name" id="regFullName" autocomplete="name">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regEmail">Email</label>
+                        <input type="text" class="form-control" name="email" id="regEmail" autocomplete="email" inputmode="email">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regUsername">Tên đăng nhập</label>
+                        <input type="text" class="form-control" name="username" id="regUsername" autocomplete="username" autocapitalize="off">
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <div class="auth-field-wrap mb-3">
+                        <label class="form-label" for="regPassword">Mật khẩu</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="password" id="regPassword" autocomplete="new-password">
+                            <button type="button" class="btn btn-outline-secondary toggle-password" aria-label="Hiển thị mật khẩu" aria-pressed="false">
+                                <i class="fas fa-eye" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="auth-field-error small text-danger mt-1 d-none" aria-live="polite"></div>
+                    </div>
+                    <input type="hidden" name="role" value="user">
+                    <div class="d-grid"><button type="submit" class="btn text-white fw-bold py-2" style="background-color: #1a1a2e;">Đăng ký</button></div>
+                </form>
+                <div class="text-center mt-3">
+                    <p class="small mb-0">Đã có tài khoản? <a href="javascript:void(0)" class="text-decoration-none" style="color: #c49b63;" id="switchToLogin">Đăng nhập ngay</a></p>
+                    <p class="small mt-2 mb-0"><a href="/register" class="text-muted">Mở trang đăng ký đầy đủ</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="/js/auth-forms.js"></script>
+<script src="/js/cart-client.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        function clearParams() {
+            const cleanUrl = window.location.origin + window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+
+        function showCenterNotice(message, variant = 'success') {
+            const el = document.getElementById('centerNotice');
+            if (!el || !message) return;
+            el.classList.remove('error');
+            if (variant === 'error') el.classList.add('error');
+            el.textContent = message;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 1800);
+        }
+
+        // Global API for other pages/scripts
+        window.showNotice = function(message, variant = 'success') {
+            showCenterNotice(message, variant);
+        };
+
+        window.showPopup = function(options) {
+            const opts = options || {};
+            const title = opts.title || 'Thông báo';
+            const message = opts.message || '';
+            const variant = opts.variant || 'success'; // success | error | info
+            const actions = Array.isArray(opts.actions) ? opts.actions : [];
+
+            const titleEl = document.getElementById('globalPopupTitle');
+            const msgEl = document.getElementById('globalPopupMessage');
+            const iconWrap = document.getElementById('globalPopupIcon');
+            const actionsEl = document.getElementById('globalPopupActions');
+
+            if (!titleEl || !msgEl || !actionsEl || !iconWrap || !window.bootstrap) return;
+
+            titleEl.textContent = title;
+            msgEl.innerHTML = '';
+            if (opts.html) msgEl.innerHTML = opts.html;
+            else msgEl.textContent = message;
+
+            const cfg = {
+                success: { bg: 'rgba(25,135,84,.12)', color: '#198754', icon: 'fa-check' },
+                error: { bg: 'rgba(220,53,69,.12)', color: '#dc3545', icon: 'fa-triangle-exclamation' },
+                info: { bg: 'rgba(13,110,253,.12)', color: '#0d6efd', icon: 'fa-circle-info' }
+            }[variant] || { bg: 'rgba(13,110,253,.12)', color: '#0d6efd', icon: 'fa-circle-info' };
+
+            iconWrap.style.background = cfg.bg;
+            iconWrap.style.color = cfg.color;
+            iconWrap.innerHTML = `<i class="fas ${cfg.icon}"></i>`;
+
+            actionsEl.innerHTML = '';
+            const renderBtn = (a) => {
+                const btn = document.createElement('a');
+                btn.className = a.className || 'btn btn-primary';
+                btn.textContent = a.label || 'OK';
+                if (a.href) btn.href = a.href;
+                else btn.href = '#';
+                if (a.dismiss !== false) btn.setAttribute('data-bs-dismiss', 'modal');
+                if (typeof a.onClick === 'function') {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        a.onClick();
+                    });
+                }
+                return btn;
+            };
+
+            if (actions.length > 0) actions.forEach(a => actionsEl.appendChild(renderBtn(a)));
+            else actionsEl.appendChild(renderBtn({ label: 'Đóng', className: 'btn btn-primary' }));
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('globalPopupModal')).show();
+        };
+
+        const loginModalEl = document.getElementById('loginModal');
+        const registerModalEl = document.getElementById('registerModal');
+        const loginModal = new bootstrap.Modal(loginModalEl);
+        const registerModal = new bootstrap.Modal(registerModalEl);
+
+        function removeBackdrop() {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        }
+
+        function cleanupModal(modalEl) {
+            if (document.activeElement) document.activeElement.blur();
+            modalEl.removeAttribute('aria-hidden');
+        }
+
+        document.getElementById('switchToRegister').addEventListener('click', function(e) {
+            e.preventDefault();
+            cleanupModal(loginModalEl);
+            loginModal.hide();
+            loginModalEl.addEventListener('hidden.bs.modal', function handler() {
+                registerModal.show();
+                loginModalEl.removeEventListener('hidden.bs.modal', handler);
+            });
+        });
+
+        document.getElementById('switchToLogin').addEventListener('click', function(e) {
+            e.preventDefault();
+            cleanupModal(registerModalEl);
+            registerModal.hide();
+            registerModalEl.addEventListener('hidden.bs.modal', function handler() {
+                loginModal.show();
+                registerModalEl.removeEventListener('hidden.bs.modal', handler);
+            });
+        });
+
+        [loginModalEl, registerModalEl].forEach(el => {
+            el.addEventListener('hide.bs.modal', function () {
+                cleanupModal(el);
+            });
+
+            el.addEventListener('hidden.bs.modal', function () {
+                setTimeout(removeBackdrop, 100);
+                if (window.location.search.includes('Error') || window.location.search.includes('Success')) {
+                    clearParams();
+                }
+            });
+
+            el.addEventListener('shown.bs.modal', function () {
+                el.removeAttribute('aria-hidden');
+            });
+        });
+
+        function shouldOpenQueryAuthModal() {
+            const p = (window.location.pathname || '/').replace(/\/$/, '') || '/';
+            return p !== '/login' && p !== '/register';
+        }
+
+        // Thông báo từ query: chỉ mở modal khi không đang ở trang đăng nhập/đăng ký riêng
+        if (shouldOpenQueryAuthModal() && urlParams.has('loginError')) {
+            const alertBox = document.getElementById('loginAlert');
+            alertBox.textContent = urlParams.get('loginError');
+            alertBox.classList.remove('d-none', 'alert-success');
+            alertBox.classList.add('alert-danger');
+
+            if (urlParams.has('username')) {
+                document.getElementById('loginUsername').value = urlParams.get('username');
+            }
+
+            loginModal.show();
+        }
+
+        if (shouldOpenQueryAuthModal() && urlParams.has('registerError')) {
+            const alertBox = document.getElementById('registerAlert');
+            alertBox.textContent = urlParams.get('registerError');
+            alertBox.classList.remove('d-none', 'alert-success');
+            alertBox.classList.add('alert-danger');
+            registerModal.show();
+        }
+
+        if (shouldOpenQueryAuthModal() && urlParams.has('registerSuccess')) {
+            const alertBox = document.getElementById('loginAlert');
+            alertBox.textContent = urlParams.get('registerSuccess');
+            alertBox.classList.remove('d-none', 'alert-danger');
+            alertBox.classList.add('alert-success');
+            loginModal.show();
+        }
+
+        // Global success/error notices (ex: update profile, change password)
+        if (urlParams.has('success')) {
+            showCenterNotice(urlParams.get('success') || 'Cập nhật thành công!');
+            urlParams.delete('success');
+            clearParams();
+        }
+        if (urlParams.has('error')) {
+            showCenterNotice(urlParams.get('error') || 'Có lỗi xảy ra', 'error');
+            urlParams.delete('error');
+            clearParams();
+        }
+
+        if (window.updateCartDropdown) {
+            window.updateCartDropdown();
+        }
+    });
+
+    // Hàm global để cập nhật dropdown giỏ hàng từ trang bất kỳ (ajax)
+    window.updateCartDropdown = function() {
+        fetch('/cart-data')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = document.getElementById('cartBadgeCount');
+                    const dropdownContent = document.getElementById('cartDropdownContent');
+                    const totalQty = typeof data.totalQty === 'number' ? data.totalQty : (data.cart || []).reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+                    const lineCount = (data.cart || []).length;
+
+                    if (window.booktotalCartMirror) {
+                        window.booktotalCartMirror.save(data.cart || [], totalQty);
+                    }
+
+                    // 1. Badge = tổng số lượng sản phẩm (mọi dòng)
+                    if (badge) {
+                        if (totalQty > 0) {
+                            badge.textContent = totalQty > 99 ? '99+' : String(totalQty);
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+
+                    // 2. Cập nhật Dropdown
+                    if (lineCount > 0) {
+                        let html = '<div class="cart-list" id="cartDropdownList">';
+                        data.cart.slice(0, 5).forEach(item => {
+                            let imgSrc = item.image_url;
+                            if (imgSrc && !imgSrc.startsWith('http')) imgSrc = '/images/' + imgSrc;
+                            html += `
+                                <div class="cart-item-row">
+                                    <img src="${imgSrc || '/images/default.jpg'}" class="cart-img" onerror="this.src='https://picsum.photos/50/70'">
+                                    <div class="cart-info">
+                                        <div class="cart-name">${item.name}</div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="small text-muted">x${item.quantity}</span>
+                                            <span class="cart-price">${item.price.toLocaleString('vi-VN')} đ</span>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        });
+                        html += '</div>';
+
+                        const total = data.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                        const isAdmin = <%= (locals.user && user.role === 'admin') ? 'true' : 'false' %>;
+
+                        html += `
+                            <div class="cart-footer">
+                                <div class="cart-total-row">
+                                    <span>Tổng cộng:</span>
+                                    <span class="cart-total-val">${total.toLocaleString('vi-VN')} đ</span>
+                                </div>
+                                ${isAdmin ? '<button class="btn-view-cart bg-secondary" disabled>Admin không thể mua hàng</button>' : '<a href="/cart" class="btn-view-cart">Xem giỏ hàng</a>'}
+                            </div>`;
+                        dropdownContent.innerHTML = html;
+                    } else {
+                        if (window.booktotalCartMirror) {
+                            window.booktotalCartMirror.save([], 0);
+                        }
+                        if (dropdownContent) {
+                            dropdownContent.innerHTML = `
+                            <div class="text-center py-5">
+                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                <p class="text-muted small mb-0">Giỏ hàng trống</p>
+                            </div>`;
+                        }
+                    }
+                }
+            })
+            .catch(function () { /* giữ UI hiện tại */ });
+    };
+</script>

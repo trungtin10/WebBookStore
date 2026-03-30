@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Mã giảm giá - Admin</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .table th { background-color: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
+        .code-badge { font-family: ui-monospace, monospace; font-weight: 700; color: #c92127; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../partials/menu') %>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-ticket-alt me-2"></i> QUẢN LÝ MÃ GIẢM GIÁ</h1>
+                    <div class="d-flex align-items-center">
+                        <a href="/admin" class="btn btn-sm btn-outline-secondary me-2"><i class="fas fa-home me-1"></i> Dashboard</a>
+                        <a href="/admin/coupons/add" class="btn btn-sm btn-warning fw-bold me-2"><i class="fas fa-plus me-1"></i> Thêm mã</a>
+                        <%- include('../partials/account_dropdown') %>
+                    </div>
+                </div>
+
+                <div class="container pb-5">
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form action="/admin/coupons" method="GET" class="row g-3 align-items-center">
+                                <div class="col-md-6">
+                                    <input type="text" name="keyword" class="form-control" placeholder="Tìm theo mã..." value="<%= query.keyword || '' %>">
+                                </div>
+                                <div class="col-md-4 d-flex">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-2"></i> Lọc</button>
+                                    <% if (query.keyword) { %>
+                                        <a href="/admin/coupons" class="btn btn-outline-secondary ms-2" title="Xóa bộ lọc"><i class="fas fa-undo"></i></a>
+                                    <% } %>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Mã</th>
+                                            <th>Loại</th>
+                                            <th>Giảm</th>
+                                            <th>Đơn tối thiểu</th>
+                                            <th>Đã dùng / Giới hạn</th>
+                                            <th>Hết hạn</th>
+                                            <th>Hiệu lực</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% if (coupons && coupons.length > 0) { %>
+                                            <% coupons.forEach(function(c) {
+                                                const isPct = (c.discount_type === 'percent');
+                                                const valStr = isPct ? (c.discount_value + '%') : (Number(c.discount_value).toLocaleString('vi-VN') + ' đ');
+                                                let expStr = '—';
+                                                if (c.expiration_date) {
+                                                    const d = c.expiration_date;
+                                                    expStr = (d instanceof Date) ? d.toLocaleDateString('vi-VN') : String(d).slice(0, 10);
+                                                }
+                                                const typeLabel = (c.type === 'shipping') ? 'Vận chuyển' : 'Sản phẩm';
+                                            %>
+                                                <tr>
+                                                    <td>#<%= c.id %></td>
+                                                    <td><span class="code-badge"><%= c.code %></span></td>
+                                                    <td><%= typeLabel %></td>
+                                                    <td><%= valStr %><% if (isPct && c.max_discount_amount > 0) { %> <small class="text-muted">(tối đa <%= Number(c.max_discount_amount).toLocaleString('vi-VN') %>)</small><% } %></td>
+                                                    <td><%= Number(c.min_order_value || 0).toLocaleString('vi-VN') %> đ</td>
+                                                    <td><%= c.used_count %> / <%= c.usage_limit %></td>
+                                                    <td><%= expStr %></td>
+                                                    <td>
+                                                        <% if (c.is_active == 1) { %>
+                                                            <span class="badge bg-success">Bật</span>
+                                                        <% } else { %>
+                                                            <span class="badge bg-secondary">Tắt</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td class="text-nowrap">
+                                                        <a href="/admin/coupons/edit/<%= c.id %>" class="btn btn-sm btn-primary me-1"><i class="fas fa-edit"></i></a>
+                                                        <button type="button" class="btn btn-sm btn-danger" onclick="showConfirmModal('/admin/coupons/delete/<%= c.id %>', 'Xóa mã <%= c.code %>? Thao tác không hoàn tác.')"><i class="fas fa-trash"></i></button>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <tr><td colspan="9" class="text-center py-4 text-muted">Chưa có mã giảm giá.</td></tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <% if (totalPages >= 1) { %>
+                        <% const buildQuery = function(page) {
+                            let q = '?page=' + page;
+                            if (query.keyword) q += '&keyword=' + encodeURIComponent(query.keyword);
+                            return q;
+                        }; %>
+                        <nav class="mt-4" aria-label="Phân trang">
+                            <ul class="pagination justify-content-end">
+                                <li class="page-item <%= currentPage <= 1 ? 'disabled' : '' %>">
+                                    <a class="page-link" href="<%= currentPage <= 1 ? '#' : buildQuery(currentPage - 1) %>">&laquo;</a>
+                                </li>
+                                <% for (let i = 1; i <= totalPages; i++) { %>
+                                    <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link" href="<%= buildQuery(i) %>"><%= i %></a>
+                                    </li>
+                                <% } %>
+                                <li class="page-item <%= currentPage >= totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link" href="<%= currentPage >= totalPages ? '#' : buildQuery(currentPage + 1) %>">&raquo;</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    <% } %>
+                </div>
+            </main>
+        </div>
+    </div>
+    <%- include('../partials/confirm_modal') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Trang chủ Bookstore</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+<body>
+    <%- include('../partials/menu') %>
+
+    <div id="heroBlock" class="d-none">
+        <div class="container mb-4 mt-3 main-content">
+            <div class="p-5 mb-4 bg-dark rounded-3 text-white" style="background: linear-gradient(45deg, #1a1a2e, #16213e);">
+                <div class="container-fluid py-3">
+                    <h1 class="display-5 fw-bold">Chào mừng đến với Bookstore</h1>
+                    <p class="col-md-8 fs-4">Khám phá thế giới tri thức qua hàng ngàn đầu sách hấp dẫn.</p>
+                    <button class="btn btn-warning btn-lg" type="button">Xem ngay</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mb-5 main-content">
+        <div class="cart-container mt-4">
+        <div id="loadingProducts" class="text-center py-5">
+            <div class="spinner-border text-danger" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải sản phẩm...</p>
+        </div>
+        <h3 id="sectionTitle" class="section-title d-none">Sản phẩm trong cửa hàng</h3>
+        <div id="productsGrid" class="row row-cols-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 d-none"></div>
+        <div id="loadMoreWrap" class="text-center mt-4 d-none">
+            <button id="btnLoadMore" class="btn btn-outline-dark px-4">
+                <i class="fas fa-plus me-2"></i>Xem thêm
+            </button>
+        </div>
+        <div id="emptyProducts" class="empty-category d-none">
+            <i class="fas fa-box-open empty-icon"></i>
+            <h4 class="text-muted mb-3">Chưa có sản phẩm nào</h4>
+            <p class="text-secondary">Rất tiếc, chúng tôi chưa cập nhật sản phẩm cho danh mục này.</p>
+            <a href="/" class="btn btn-outline-primary mt-3">Xem tất cả sách</a>
+        </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <script>
+        (function() {
+            const pageSize = 10;
+            let offset = 0;
+            let isLoading = false;
+
+            const loadingEl = document.getElementById('loadingProducts');
+            const heroEl = document.getElementById('heroBlock');
+            const titleEl = document.getElementById('sectionTitle');
+            const gridEl = document.getElementById('productsGrid');
+            const emptyEl = document.getElementById('emptyProducts');
+            const loadMoreWrapEl = document.getElementById('loadMoreWrap');
+            const loadMoreBtnEl = document.getElementById('btnLoadMore');
+
+            function renderProducts(items, append = false) {
+                const html = items.map(item => {
+                    let imgSrc = item.image_url && !item.image_url.startsWith('http') ? '/images/' + item.image_url : (item.image_url || '/images/default.jpg');
+                    const badge = item.has_discount
+                        ? `<span class="product-discount-badge" style="position:absolute;top:8px;left:8px;z-index:2;">-${item.discount_percent}%</span>`
+                        : '';
+                    const priceRow = item.has_discount && item.list_price
+                        ? `<div class="product-price-row" style="justify-content:center;"><span class="product-price-old">${Number(item.list_price).toLocaleString('vi-VN')} đ</span><span class="home-product-price" style="margin:0;">${Number(item.price).toLocaleString('vi-VN')} đ</span></div>`
+                        : `<div class="home-product-price">${Number(item.price).toLocaleString('vi-VN')} đ</div>`;
+                    return `<div class="col">
+                        <a href="/product/${item.id}" class="home-product-card">
+                            <div class="home-product-img-wrap" style="position:relative;">
+                                ${badge}
+                                <img src="${imgSrc}" class="home-product-img" alt="${item.name}" onerror="this.src='https://picsum.photos/300/400?random=${item.id}'">
+                            </div>
+                            <div class="home-product-body">
+                                <div class="home-product-title" title="${item.name}">${item.name}</div>
+                                ${priceRow}
+                                <div class="home-product-stars">
+                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                        </a>
+                    </div>`;
+                }).join('');
+
+                if (append) gridEl.insertAdjacentHTML('beforeend', html);
+                else gridEl.innerHTML = html;
+            }
+
+            function setLoadMoreState(disabled, text) {
+                loadMoreBtnEl.disabled = disabled;
+                loadMoreBtnEl.innerHTML = text;
+            }
+
+            function loadProducts(initial = false) {
+                if (isLoading) return;
+                isLoading = true;
+
+                if (initial) {
+                    loadingEl.classList.remove('d-none');
+                    emptyEl.classList.add('d-none');
+                } else {
+                    setLoadMoreState(true, '<span class="spinner-border spinner-border-sm me-2"></span>Đang tải...');
+                }
+
+                fetch(`/api/products?limit=${pageSize}&offset=${offset}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (initial) loadingEl.classList.add('d-none');
+
+                        if (!data.success || !data.data) {
+                            if (initial) emptyEl.classList.remove('d-none');
+                            loadMoreWrapEl.classList.add('d-none');
+                            return;
+                        }
+
+                        const payload = data.data;
+                        const items = Array.isArray(payload) ? payload : (payload.items || []);
+                        if (initial && items.length === 0) {
+                            emptyEl.classList.remove('d-none');
+                            loadMoreWrapEl.classList.add('d-none');
+                            return;
+                        }
+
+                        heroEl.classList.remove('d-none');
+                        titleEl.classList.remove('d-none');
+                        gridEl.classList.remove('d-none');
+
+                        renderProducts(items, !initial);
+                        offset += items.length;
+
+                        const noMore = payload.hasMore === false || items.length < pageSize;
+                        if (noMore) {
+                            loadMoreWrapEl.classList.add('d-none');
+                        } else {
+                            loadMoreWrapEl.classList.remove('d-none');
+                            setLoadMoreState(false, '<i class="fas fa-plus me-2"></i>Xem thêm');
+                        }
+                    })
+                    .catch(() => {
+                        if (initial) {
+                            loadingEl.classList.add('d-none');
+                            emptyEl.classList.remove('d-none');
+                        } else {
+                            setLoadMoreState(false, '<i class="fas fa-plus me-2"></i>Xem thêm');
+                        }
+                    })
+                    .finally(() => {
+                        isLoading = false;
+                    });
+            }
+
+            loadMoreBtnEl.addEventListener('click', function() {
+                loadProducts(false);
+            });
+
+            loadProducts(true);
+        })();
+    </script>
+</body>
+</html>

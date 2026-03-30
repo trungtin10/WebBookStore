@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quản Lý Người Dùng - Admin</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .admin-header {
+            background-color: #1a1a2e;
+            color: white;
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .role-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-admin {
+            background-color: #cff4fc;
+            color: #055160;
+        }
+
+        .role-user {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-active {
+            color: #0f5132;
+            font-weight: 700;
+        }
+
+        .status-locked {
+            color: #842029;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <%- include('../partials/menu') %>
+
+                <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                    <div
+                        class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-users me-2"></i> Quản lý người dùng</h1>
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <a href="/admin" class="btn btn-sm btn-outline-secondary"><i
+                                    class="fas fa-home me-1"></i> Dashboard</a>
+                            <a href="/admin/user/add" class="btn btn-sm btn-warning fw-bold"><i
+                                    class="fas fa-plus me-1"></i> Thêm mới</a>
+                            <%- include('../partials/account_dropdown') %>
+                        </div>
+                    </div>
+
+                    <% const qVal = typeof q !== 'undefined' ? q : ''; const p = typeof page !== 'undefined' ? page : 1; const tp = typeof totalPages !== 'undefined' ? totalPages : 1; const tot = typeof total !== 'undefined' ? total : 0; %>
+
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= error %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+                    <% if (typeof success !== 'undefined' && success) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%= success %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    <% } %>
+
+                    <div class="card mb-3">
+                        <div class="card-body py-3">
+                            <form class="row g-2 align-items-end" method="get" action="/admin/user">
+                                <div class="col-md-8 col-lg-6">
+                                    <label class="form-label small text-muted mb-1">Tìm theo tên, email hoặc tên đăng nhập</label>
+                                    <input type="search" class="form-control" name="q" value="<%= qVal %>" placeholder="Nhập từ khóa...">
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-search me-1"></i> Tìm</button>
+                                </div>
+                                <% if (qVal) { %>
+                                    <div class="col-auto">
+                                        <a href="/admin/user" class="btn btn-outline-secondary">Xóa lọc</a>
+                                    </div>
+                                <% } %>
+                            </form>
+                            <p class="text-muted small mb-0 mt-2">Tổng: <strong><%= tot %></strong> người dùng<% if (tp > 1) { %>, trang <%= p %> / <%= tp %><% } %>.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Tên đăng nhập</th>
+                                            <th>Họ tên</th>
+                                            <th>Email</th>
+                                            <th>Vai trò</th>
+                                            <th>Trạng thái</th>
+                                            <th class="text-end">Hành động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% if (users && users.length > 0) { %>
+                                            <% users.forEach(u => {
+                                                let role = u.role ? u.role.toLowerCase().trim() : 'user';
+                                                const active = Number(u.is_active) !== 0;
+                                                const isAdminUser = role === 'admin';
+                                                const toggleQs = 'page=' + p + (qVal ? '&q=' + encodeURIComponent(qVal) : '');
+                                            %>
+                                                <tr class="<%= !active ? 'table-light' : '' %>">
+                                                    <td>#<%= u.id %></td>
+                                                    <td class="fw-bold"><%= u.username %></td>
+                                                    <td><%= u.full_name || '—' %></td>
+                                                    <td><%= u.email %></td>
+                                                    <td>
+                                                        <% if (isAdminUser) { %>
+                                                            <span class="role-badge role-admin">Admin</span>
+                                                        <% } else { %>
+                                                            <span class="role-badge role-user">User</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td>
+                                                        <% if (active) { %>
+                                                            <span class="status-active"><i class="fas fa-circle-check me-1"></i>Hoạt động</span>
+                                                        <% } else { %>
+                                                            <span class="status-locked"><i class="fas fa-lock me-1"></i>Đã khóa</span>
+                                                        <% } %>
+                                                    </td>
+                                                    <td class="text-end text-nowrap">
+                                                        <a href="/admin/user/edit/<%= u.id %>" class="btn btn-sm btn-outline-primary" title="Sửa">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <% if (!isAdminUser) { %>
+                                                            <a href="/admin/user/toggle-active/<%= u.id %>?<%= toggleQs %>"
+                                                               class="btn btn-sm <%= active ? 'btn-outline-warning' : 'btn-outline-success' %>"
+                                                               title="<%= active ? 'Khóa tài khoản' : 'Mở khóa' %>"
+                                                               onclick="return confirm('<%= active ? 'Khóa tài khoản này? Người dùng sẽ không đăng nhập được.' : 'Mở khóa tài khoản này?' %>');">
+                                                                <i class="fas <%= active ? 'fa-user-slash' : 'fa-user-check' %>"></i>
+                                                            </a>
+                                                        <% } else { %>
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Không áp dụng cho Admin">
+                                                                <i class="fas fa-user-shield"></i>
+                                                            </button>
+                                                        <% } %>
+                                                        <button type="button" class="btn btn-sm btn-danger" title="Xóa"
+                                                            onclick="showConfirmModal('/admin/user/delete/<%= u.id %>', 'Bạn có chắc chắn muốn xóa người dùng này?')">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            <% }); %>
+                                        <% } else { %>
+                                            <tr>
+                                                <td colspan="7" class="text-center py-5 text-muted">
+                                                    Không có người dùng nào<% if (qVal) { %> khớp tìm kiếm<% } %>.
+                                                </td>
+                                            </tr>
+                                        <% } %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <% if (tp > 1) { %>
+                            <div class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                <nav aria-label="Phân trang">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        <% if (p > 1) { %>
+                                            <li class="page-item">
+                                                <a class="page-link" href="/admin/user?page=<%= p - 1 %><%= qVal ? '&q=' + encodeURIComponent(qVal) : '' %>">Trước</a>
+                                            </li>
+                                        <% } %>
+                                        <% for (let i = Math.max(1, p - 2); i <= Math.min(tp, p + 2); i++) { %>
+                                            <li class="page-item <%= i === p ? 'active' : '' %>">
+                                                <a class="page-link" href="/admin/user?page=<%= i %><%= qVal ? '&q=' + encodeURIComponent(qVal) : '' %>"><%= i %></a>
+                                            </li>
+                                        <% } %>
+                                        <% if (p < tp) { %>
+                                            <li class="page-item">
+                                                <a class="page-link" href="/admin/user?page=<%= p + 1 %><%= qVal ? '&q=' + encodeURIComponent(qVal) : '' %>">Sau</a>
+                                            </li>
+                                        <% } %>
+                                    </ul>
+                                </nav>
+                            </div>
+                        <% } %>
+                    </div>
+
+                </main>
+        </div>
+    </div>
+    <%- include('../partials/confirm_modal') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

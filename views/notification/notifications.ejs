@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Thông báo của bạn - Bookstore</title>
+    <link href="/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/site-menu.css">
+</head>
+<body class="notifications-page">
+    <%- include('../partials/menu') %>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="notification-card">
+                        <div class="notification-header">
+                            <h4 class="mb-0 fw-bold"><i class="far fa-bell me-2 text-danger"></i> Thông báo của bạn</h4>
+                            <span class="badge bg-secondary"><%= notifications ? notifications.length : 0 %> tin</span>
+                        </div>
+
+                        <div class="notification-list">
+                            <% if (notifications && notifications.length > 0) { %>
+                                <% notifications.forEach(notif => {
+                                    let iconClass = 'icon-info';
+                                    let iconName = 'fa-circle-info';
+                                    let badgeClass = 'badge-info';
+                                    let typeText = 'Thông tin';
+
+                                    if (notif.type === 'success') { iconClass = 'icon-success'; iconName = 'fa-check'; badgeClass = 'badge-success'; typeText = 'Thành công'; }
+                                    else if (notif.type === 'warning') { iconClass = 'icon-warning'; iconName = 'fa-triangle-exclamation'; badgeClass = 'badge-warning'; typeText = 'Cảnh báo'; }
+                                    else if (notif.type === 'danger') { iconClass = 'icon-danger'; iconName = 'fa-xmark'; badgeClass = 'badge-danger'; typeText = 'Lỗi'; }
+                                %>
+                                    <div class="notification-item <%= notif.is_read ? '' : 'unread' %>">
+                                        <div class="notif-icon <%= iconClass %>">
+                                            <i class="fas <%= iconName %>"></i>
+                                        </div>
+                                        <div class="notif-content">
+                                            <div class="notif-top">
+                                                <div class="notif-title"><%= notif.title %></div>
+                                                <span class="notif-badge <%= badgeClass %>"><%= typeText %></span>
+                                            </div>
+                                            <div class="notif-message"><%= notif.message %></div>
+                                            <div class="notif-time">
+                                                <i class="far fa-clock me-1"></i><%= new Date(notif.created_at).toLocaleString('vi-VN') %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } else { %>
+                                <div class="notif-empty">
+                                    <div class="notif-empty-icon"><i class="far fa-bell-slash"></i></div>
+                                    <h5 class="mb-2 fw-bold">Bạn chưa có thông báo nào</h5>
+                                    <p class="mb-3 text-muted">Các cập nhật về đơn hàng và khuyến mãi sẽ hiển thị tại đây.</p>
+                                    <a href="/" class="btn btn-primary btn-sm"><i class="fas fa-store me-1"></i> Về trang chủ</a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+    <script src="/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>
