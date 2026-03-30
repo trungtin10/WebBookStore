@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Mã giảm giá | Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .table th { background-color: #f8f9fa; font-weight: 600; }
+        .coupon-code { font-family: monospace; font-weight: 700; letter-spacing: 1px; }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div th:replace="~{admin/partials/layout :: sidebar}"></div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-ticket-alt me-2 text-primary"></i> QUẢN LÝ MÃ GIẢM GIÁ</h1>
+                    <div class="d-flex align-items-center">
+                        <a th:href="@{/admin/coupons/add}" class="btn btn-sm btn-primary fw-bold me-2">
+                            <i class="fas fa-plus me-1"></i> Thêm mã mới
+                        </a>
+                        <div th:replace="~{admin/partials/layout :: topbar}"></div>
+                    </div>
+                </div>
+
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-1"></i> <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Mã</th>
+                                        <th>Nội dung</th>
+                                        <th>Giá trị</th>
+                                        <th>Ngày hết hạn</th>
+                                        <th>Đã dùng/Tổng</th>
+                                        <th>Lượt/Người</th>
+                                        <th>Trạng thái</th>
+                                        <th class="pe-3 text-center">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="c : ${coupons}">
+                                        <td class="ps-3"><span class="coupon-code text-primary" th:text="${c.code}"></span></td>
+                                        <td th:text="${c.description != null ? c.description : '---'}" style="max-width: 150px;" class="text-truncate"></td>
+                                        <td class="fw-bold">
+                                            <span th:text="${c.discountType == 'PERCENT' ? c.discountValue + '%' : #numbers.formatDecimal(c.discountValue, 0, 'COMMA', 0, 'POINT') + 'đ'}"></span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${c.expirationDate != null}"
+                                                  th:text="${#temporals.format(c.expirationDate, 'dd/MM/yyyy')}"
+                                                  th:classappend="${c.expirationDate.isBefore(T(java.time.LocalDate).now()) ? 'text-danger fw-bold' : ''}"></span>
+                                            <span th:unless="${c.expirationDate != null}">Vô thời hạn</span>
+                                        </td>
+                                        <td th:text="${c.usedCount + '/' + (c.usageLimit != null ? c.usageLimit : '∞')}"></td>
+                                        <td class="text-center fw-bold text-secondary" th:text="${c.userUsageLimit}"></td>
+                                        <td>
+                                            <span th:if="${c.isActive}" class="badge bg-success">Hoạt động</span>
+                                            <span th:unless="${c.isActive}" class="badge bg-danger">Đã tắt</span>
+                                        </td>
+                                        <td class="pe-3 text-center">
+                                            <div class="btn-group">
+                                                <a th:href="@{/admin/coupons/edit/{id}(id=${c.id})}" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                                <form th:action="@{/admin/coupons/delete/{id}(id=${c.id})}" method="POST"
+                                                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa mã này?')" style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger ms-1"><i class="fas fa-trash"></i></button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

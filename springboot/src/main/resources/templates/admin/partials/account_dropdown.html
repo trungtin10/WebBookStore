@@ -1,0 +1,39 @@
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="account_dropdown" class="dropdown ms-3">
+        <a href="#"
+            class="btn btn-outline-light dropdown-toggle d-flex align-items-center bg-dark text-white rounded-pill px-3 py-2"
+            data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid rgba(255,255,255,0.2);">
+            <i class="fas fa-user-circle fs-5 me-2 text-warning"></i>
+            <span class="fw-bold" th:text="${session.user != null ? session.user.username : 'Admin'}">
+            </span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0" style="border-radius: 10px; min-width: 200px;">
+            <li>
+                <h6 class="dropdown-header text-uppercase fw-bold text-muted">Tài khoản của tôi</h6>
+            </li>
+            <li>
+                <a class="dropdown-item py-2" th:href="@{/admin/profile}">
+                    <i class="fas fa-user me-2 text-primary"></i> Thông tin tài khoản
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item py-2" th:href="@{/admin/profile}">
+                    <!-- Assuming standard change profile mapping is unified for admins as well -->
+                    <i class="fas fa-key me-2 text-warning"></i> Đổi mật khẩu
+                </a>
+            </li>
+            <li>
+                <hr class="dropdown-divider">
+            </li>
+            <li>
+                <a class="dropdown-item py-2 text-danger fw-bold" th:href="@{/auth/logout}">
+                    <i class="fas fa-sign-out-alt me-2"></i> Đăng xuất
+                </a>
+            </li>
+        </ul>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
+<head>
+    <meta charset="UTF-8">
+    <title layout:title-pattern="$CONTENT_TITLE | BOOKTOTAL ADMIN">Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; }
+        .admin-sidebar {
+            min-height: 100vh;
+            background-color: #212529; /* Dark background */
+            padding-top: 20px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            width: 16.666667%;
+        }
+        .admin-brand {
+            color: #fff;
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            padding: 10px;
+            font-size: 1.2rem;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+        .admin-nav .nav-link {
+            color: rgba(255,255,255,.75);
+            padding: 12px 20px;
+            transition: 0.2s;
+            border-left: 4px solid transparent;
+        }
+        .admin-nav .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255,255,255,.1);
+        }
+        .admin-nav .nav-link.active {
+            color: #fff;
+            background-color: #007bff; /* Màu xanh đậm */
+            border-left-color: #0d6efd;
+            font-weight: 600;
+        }
+        .admin-nav .nav-link i { margin-right: 10px; width: 20px; }
+        .topbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 10px 30px;
+            margin-bottom: 30px;
+            border-radius: 0 0 12px 12px;
+        }
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; background-color: #eee; display: flex; align-items: center; justify-content: center; margin-right: 10px; }
+        main {
+            margin-left: 16.666667%;
+            padding-bottom: 50px;
+        }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+    </style>
+    <th:block layout:fragment="css"></th:block>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar Dùng Chung -->
+            <div class="admin-sidebar">
+                <a href="/admin" class="admin-brand">BOOKTOTAL ADMIN</a>
+                <ul class="nav flex-column admin-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin}" th:classappend="${activePage == 'dashboard' ? 'active' : ''}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/stats}" th:classappend="${activePage == 'stats' ? 'active' : ''}"><i class="fas fa-chart-line"></i> Thống kê</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/products}" th:classappend="${activePage == 'products' ? 'active' : ''}"><i class="fas fa-book"></i> Sản phẩm</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/categories}" th:classappend="${activePage == 'categories' ? 'active' : ''}"><i class="fas fa-list"></i> Danh mục</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/orders}" th:classappend="${activePage == 'orders' ? 'active' : ''}"><i class="fas fa-shopping-cart"></i> Đơn hàng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/inventory}" th:classappend="${activePage == 'inventory' ? 'active' : ''}"><i class="fas fa-warehouse"></i> Kho hàng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/user}" th:classappend="${activePage == 'users' ? 'active' : ''}"><i class="fas fa-users"></i> Người dùng</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/coupons}" th:classappend="${activePage == 'coupons' ? 'active' : ''}"><i class="fas fa-ticket-alt"></i> Mã giảm giá</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/admin/reviews}" th:classappend="${activePage == 'reviews' ? 'active' : ''}"><i class="fas fa-star"></i> Đánh giá</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Topbar Dùng Chung -->
+                <div class="topbar d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold text-muted" layout:fragment="pageTitle">Hệ thống quản trị</h5>
+                    <div class="dropdown">
+                        <div class="d-flex align-items-center cursor-pointer" data-bs-toggle="dropdown" style="cursor: pointer;">
+                            <div class="user-avatar"><i class="fas fa-user-shield text-primary"></i></div>
+                            <div class="me-2">
+                                <div class="fw-bold small" sec:authentication="name">Admin</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Quản trị viên</div>
+                            </div>
+                            <i class="fas fa-chevron-down small text-muted"></i>
+                        </div>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                            <li><a class="dropdown-item py-2" th:href="@{/admin/profile}"><i class="fas fa-user-circle me-2 text-primary"></i> Hồ sơ cá nhân</a></li>
+                            <li><a class="dropdown-item py-2" th:href="@{/admin/change-password}"><i class="fas fa-key me-2 text-warning"></i> Đổi mật khẩu</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form th:action="@{/logout}" method="POST">
+                                    <button type="submit" class="dropdown-item py-2 text-danger"><i class="fas fa-sign-out-alt me-2"></i> Đăng xuất</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Nội dung thay đổi của từng trang -->
+                <div layout:fragment="content"></div>
+            </main>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <th:block layout:fragment="script"></th:block>
+</body>
+</html>

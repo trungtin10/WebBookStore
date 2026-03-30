@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <!-- Admin Sidebar Partial -->
+    <div th:fragment="sidebar" class="col-md-3 col-lg-2 d-md-block admin-sidebar collapse">
+        <style>
+            .admin-sidebar {
+                min-height: 100vh;
+                background-color: #1a1a2e;
+                color: #fff;
+                padding-top: 20px;
+            }
+
+            .admin-brand {
+                font-size: 1.5rem;
+                font-weight: 800;
+                color: #c49b63;
+                text-align: center;
+                margin-bottom: 30px;
+                display: block;
+                text-decoration: none;
+            }
+
+            .admin-nav .nav-link {
+                color: #a8a8b3;
+                padding: 12px 20px;
+                font-weight: 500;
+                border-left: 3px solid transparent;
+                transition: 0.2s;
+            }
+
+            .admin-nav .nav-link:hover,
+            .admin-nav .nav-link.active {
+                color: #fff;
+                background-color: rgba(255, 255, 255, 0.05);
+                border-left-color: #c49b63;
+            }
+
+            .admin-nav i {
+                width: 25px;
+                text-align: center;
+                margin-right: 10px;
+            }
+        </style>
+
+        <a th:href="@{/admin}" class="admin-brand">BOOKTOTAL ADMIN</a>
+
+        <ul class="nav flex-column admin-nav">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin}" th:classappend="${activePage == 'dashboard' ? 'active' : ''}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/stats}" th:classappend="${activePage == 'stats' ? 'active' : ''}"><i class="fas fa-chart-line"></i> Thống kê</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/products}" th:classappend="${activePage == 'products' ? 'active' : ''}"><i class="fas fa-book"></i> Sản phẩm</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/categories}" th:classappend="${activePage == 'categories' ? 'active' : ''}"><i class="fas fa-list"></i> Danh mục</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/orders}" th:classappend="${activePage == 'orders' ? 'active' : ''}"><i class="fas fa-shopping-cart"></i> Đơn hàng</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/inventory}" th:classappend="${activePage == 'inventory' ? 'active' : ''}"><i class="fas fa-warehouse"></i> Kho hàng</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/user}" th:classappend="${activePage == 'users' ? 'active' : ''}"><i class="fas fa-users"></i> Người dùng</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/coupons}" th:classappend="${activePage == 'coupons' ? 'active' : ''}"><i class="fas fa-ticket-alt"></i> Mã giảm giá</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin/reviews}" th:classappend="${activePage == 'reviews' ? 'active' : ''}"><i class="fas fa-star"></i> Đánh giá</a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Admin Topbar (Account Dropdown) Partial -->
+    <div th:fragment="topbar" class="d-flex align-items-center gap-3">
+        <!-- Dashboard Quick Link (Only show if not already on dashboard) -->
+        <a th:if="${activePage != 'dashboard'}" th:href="@{/admin}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 shadow-sm hover-lift" title="Quay lại Dashboard">
+            <i class="fas fa-home me-1 text-primary"></i> Dashboard
+        </a>
+
+        <!-- Premium Account Dropdown -->
+        <div class="dropdown">
+            <div class="d-flex align-items-center p-1 pe-2 rounded-pill hover-bg-light cursor-pointer shadow-sm border bg-white" 
+                 data-bs-toggle="dropdown" style="cursor: pointer; transition: all 0.2s;">
+                <div class="user-avatar-small bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" 
+                     style="width: 32px; height: 32px;">
+                    <i class="fas fa-user-shield text-primary fs-6"></i>
+                </div>
+                <div class="me-2 d-none d-sm-block">
+                    <div class="fw-bold" style="font-size: 0.85rem; line-height: 1.2;" th:text="${#authentication.name}">Admin</div>
+                    <div class="text-muted" style="font-size: 0.7rem;">Quản trị viên</div>
+                </div>
+                <i class="fas fa-chevron-down small text-muted opacity-50"></i>
+            </div>
+            
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2 p-2" style="border-radius: 12px; min-width: 220px;">
+                <li class="px-3 py-2 mb-1 border-bottom d-sm-none">
+                    <div class="fw-bold" th:text="${#authentication.name}">Admin</div>
+                    <div class="text-muted small">Quản trị viên</div>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2 px-3 rounded-2" th:href="@{/admin/profile}">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-box-sm bg-primary bg-opacity-10 text-primary me-2 rounded">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <span>Hồ sơ cá nhân</span>
+                        </div>
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2 px-3 rounded-2" th:href="@{/admin/change-password}">
+                        <div class="d-flex align-items-center">
+                            <div class="icon-box-sm bg-warning bg-opacity-10 text-warning me-2 rounded">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <span>Đổi mật khẩu</span>
+                        </div>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider mx-2"></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" class="m-0 p-0">
+                        <button type="submit" class="dropdown-item py-2 px-3 rounded-2 text-danger fw-bold">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box-sm bg-danger bg-opacity-10 text-danger me-2 rounded">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                </div>
+                                <span>Đăng xuất</span>
+                            </div>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <style>
+            .hover-bg-light:hover { background-color: #f8f9fa !important; border-color: #dee2e6 !important; }
+            .dropdown-item:active { background-color: #f0f4f8; color: #1a1a2e; }
+            .icon-box-sm { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; }
+            .hover-lift:hover { transform: translateY(-1px); }
+        </style>
+    </div>
+</body>
+
+</html>

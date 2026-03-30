@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách Sản Phẩm | BookTotal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .book-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            background: white;
+            height: 100%;
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+        }
+
+        .card-img-top {
+            height: 260px;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .book-card:hover .card-img-top {
+            transform: scale(1.03);
+        }
+
+        .card-body {
+            padding: 12px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            height: 42px;
+            line-height: 1.4;
+        }
+
+        .card-title:hover {
+            color: #C92127;
+        }
+
+        .price-tag {
+            font-size: 1.1rem;
+            color: #C92127;
+            font-weight: 700;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .rating-sold {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 8px;
+        }
+
+        .stars {
+            color: #FFD700;
+            margin-right: 5px;
+        }
+
+        a.product-link {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .section-title {
+            position: relative;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-weight: 700;
+            color: #333;
+            text-transform: uppercase;
+            font-size: 1.4rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 80px;
+            height: 3px;
+            background-color: #C92127;
+        }
+
+        .cat-list-group .list-group-item {
+            border: none;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 12px 15px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .cat-list-group .list-group-item:hover {
+            color: #C92127;
+            background-color: #f9f9f9;
+        }
+
+        .cat-list-group .list-group-item.active {
+            background-color: #C92127;
+            border-color: #C92127;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{partials/header :: header}"></div>
+
+    <div class="container pb-5 mt-4">
+        <div class="row">
+            <!-- Sidebar Categories -->
+            <div class="col-md-3 mb-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold py-3 text-uppercase border-bottom-0" style="color:#C92127">
+                        <i class="fas fa-list me-2"></i> Danh Mục Sách
+                    </div>
+                    <div class="list-group list-group-flush cat-list-group">
+                        <a th:href="@{/products}" class="list-group-item list-group-item-action"
+                            th:classappend="${param.categoryId == null} ? 'active' : ''">Tất cả sản phẩm</a>
+                        <a th:each="cat : ${categories}" th:href="@{/products(categoryId=${cat.id})}"
+                            class="list-group-item list-group-item-action"
+                            th:classappend="${param.categoryId != null and param.categoryId[0] == cat.id.toString()} ? 'active' : ''"
+                            th:text="${cat.name}"></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <h3 class="section-title">
+                    <span th:if="${param.search != null}" th:text="'Kết quả tìm kiếm: ' + ${param.search}"></span>
+                    <span th:if="${param.search == null}">Tất Cả Sản Phẩm</span>
+                </h3>
+
+                <div th:if="${products != null and !products.empty}"
+                    class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    <div class="col" th:each="item : ${products}">
+                        <a th:href="@{'/product/' + ${item.id}}" class="product-link">
+                            <div class="card book-card shadow-sm">
+                                <div style="overflow: hidden;">
+                                    <img th:src="${item.imageUrl != null ? item.imageUrl : '/images/default.jpg'}"
+                                        class="card-img-top" th:alt="${item.name}"
+                                        onerror="this.src='/images/default.jpg'">
+                                </div>
+
+                                <div class="card-body">
+                                    <h5 class="card-title" th:title="${item.name}" th:text="${item.name}"></h5>
+                                    <span class="price-tag"
+                                        th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                    <div class="rating-sold">
+                                        <div class="stars">
+                                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                                                class="fas fa-star"></i><i class="fas fa-star"></i><i
+                                                class="fas fa-star-half-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div th:if="${products == null or products.empty}" class="text-center py-5">
+                    <h4 class="text-muted">Không tìm thấy sản phẩm nào.</h4>
+                </div>
+
+                <!-- Pagination -->
+                <nav th:if="${totalPages > 1}" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 1} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/products(page=${currentPage - 1}, categoryId=${param.categoryId}, search=${param.search})}">Trước</a>
+                        </li>
+                        <li class="page-item" th:each="i : ${#numbers.sequence(1, totalPages)}"
+                            th:classappend="${currentPage == i} ? 'active'">
+                            <a class="page-link"
+                                th:href="@{/products(page=${i}, categoryId=${param.categoryId}, search=${param.search})}"
+                                th:text="${i}"></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages} ? 'disabled'">
+                            <a class="page-link"
+                                th:href="@{/products(page=${currentPage + 1}, categoryId=${param.categoryId}, search=${param.search})}">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{partials/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

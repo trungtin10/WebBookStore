@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <title>Thanh toán - Bookstore</title>
+    <th:block layout:fragment="css">
+        <style>
+            body {
+                background-color: #f0f2f5;
+                font-family: 'Segoe UI', sans-serif;
+            }
+
+            .checkout-container {
+                background: white;
+                border-radius: 12px;
+                padding: 30px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                margin-top: 30px;
+                margin-bottom: 50px;
+            }
+
+            .section-title {
+                font-size: 1.2rem;
+                font-weight: 700;
+                color: #333;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #f0f0f0;
+                padding-bottom: 10px;
+                text-transform: uppercase;
+            }
+
+            .form-label {
+                font-weight: 600;
+                color: #555;
+                font-size: 0.9rem;
+            }
+
+            .form-control,
+            .form-select {
+                padding: 10px 15px;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+            }
+
+            .form-control:focus,
+            .form-select:focus {
+                border-color: #C92127;
+                box-shadow: 0 0 0 3px rgba(201, 33, 39, 0.1);
+            }
+
+            .order-summary {
+                background: #fafafa;
+                border-radius: 8px;
+                padding: 20px;
+                border: 1px solid #eee;
+            }
+
+            .summary-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                font-size: 0.95rem;
+            }
+
+            .summary-total {
+                font-weight: 700;
+                font-size: 1.2rem;
+                color: #C92127;
+                border-top: 1px solid #ddd;
+                padding-top: 15px;
+                margin-top: 10px;
+            }
+
+            .btn-confirm {
+                background-color: #C92127;
+                color: white;
+                font-weight: 700;
+                width: 100%;
+                padding: 12px;
+                border: none;
+                border-radius: 8px;
+                transition: 0.3s;
+                text-transform: uppercase;
+                margin-top: 20px;
+            }
+
+            .btn-confirm:hover {
+                background-color: #a11b20;
+            }
+
+            .payment-method-item {
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                transition: 0.2s;
+                display: flex;
+                align-items: center;
+            }
+
+            .payment-method-item:hover {
+                border-color: #C92127;
+                background-color: #fff5f5;
+            }
+
+            .payment-method-item input {
+                margin-right: 15px;
+                transform: scale(1.2);
+                accent-color: #C92127;
+            }
+
+            .payment-icon {
+                width: 35px;
+                margin-right: 10px;
+                object-fit: contain;
+            }
+
+            .qr-payment-box {
+                display: none;
+                text-align: center;
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin-top: 15px;
+                border: 1px dashed #C92127;
+            }
+
+            .qr-img {
+                width: 200px;
+                height: 200px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                padding: 5px;
+                background: white;
+            }
+
+            .qr-note {
+                font-size: 0.9rem;
+                color: #555;
+            }
+
+            .qr-amount {
+                font-weight: 700;
+                color: #C92127;
+                font-size: 1.1rem;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <form th:action="@{/order}" method="POST" id="checkoutForm" onsubmit="return validateAndSubmitCheckout()">
+                <div class="row">
+                    <!-- CỘT TRÁI: THÔNG TIN GIAO HÀNG -->
+                    <div class="col-lg-8">
+                        <div class="checkout-container">
+                            <h4 class="section-title"><i class="fas fa-map-marker-alt me-2 text-danger"></i> Địa chỉ
+                                giao hàng</h4>
+
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Họ và tên người nhận</label>
+                                    <input type="text" class="form-control" name="fullName"
+                                        th:value="${session.user != null ? session.user.fullName : ''}" required
+                                        placeholder="Nhập họ tên...">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Số điện thoại</label>
+                                    <input type="tel" class="form-control" name="phone"
+                                        th:value="${session.user != null ? session.user.phone : ''}" required
+                                        placeholder="">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email"
+                                        th:value="${session.user != null ? session.user.email : ''}" required
+                                        placeholder="">
+                                </div>
+
+                                <!-- ĐỊA CHỈ CHI TIẾT (API nội bộ - khớp với DB phí ship) -->
+                                <div class="col-md-4">
+                                    <label class="form-label">Tỉnh/Thành phố</label>
+                                    <select class="form-select" id="province" name="province" required onchange="loadDistricts()">
+                                        <option value="">Chọn Tỉnh/Thành</option>
+                                    </select>
+                                    <input type="hidden" name="provinceName" id="province_name">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Quận/Huyện</label>
+                                    <select class="form-select" id="district" name="district" required onchange="loadWards()" disabled>
+                                        <option value="">Chọn Quận/Huyện</option>
+                                    </select>
+                                    <input type="hidden" name="districtName" id="district_name">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Phường/Xã</label>
+                                    <select class="form-select" id="ward" name="ward" required onchange="updateAddressString()" disabled>
+                                        <option value="">Chọn Phường/Xã</option>
+                                    </select>
+                                    <input type="hidden" name="wardName" id="ward_name">
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Địa chỉ cụ thể (Số nhà, tên đường)</label>
+                                    <input type="text" class="form-control" id="address_detail" required placeholder=""
+                                        oninput="updateAddressString()">
+                                </div>
+
+                                <!-- Input ẩn: địa chỉ đầy đủ gửi lên server -->
+                                <input type="hidden" name="address" id="fullAddress">
+
+                                <div class="col-12">
+                                    <label class="form-label">Ghi chú đơn hàng (Tùy chọn)</label>
+                                    <textarea class="form-control" name="note" rows="2" placeholder=""></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="checkout-container">
+                            <h4 class="section-title"><i class="fas fa-credit-card me-2 text-danger"></i> Phương thức
+                                thanh toán</h4>
+
+                            <label class="payment-method-item">
+                                <input type="radio" name="paymentMethod" value="COD" checked>
+                                <img src="https://cdn-icons-png.flaticon.com/512/2331/2331941.png" class="payment-icon"
+                                    alt="COD">
+                                <span>Thanh toán khi nhận hàng (COD)</span>
+                            </label>
+
+                            <label class="payment-method-item">
+                                <input type="radio" name="paymentMethod" value="VNPAY">
+                                <img src="https://vinadesign.vn/uploads/images/2023/05/vnpay-logo-vinadesign-25-12-57-55.jpg"
+                                    class="payment-icon" alt="VNPAY">
+                                <span>Ví VNPAY / QR Code</span>
+                            </label>
+
+                            <label class="payment-method-item">
+                                <input type="radio" name="paymentMethod" value="MOMO">
+                                <img src="https://developers.momo.vn/v3/assets/images/square-8c08a00f550e40a2efafea4a005b1232.png"
+                                    class="payment-icon" alt="MOMO" style="border-radius: 4px;">
+                                <span>Ví MoMo</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- CỘT PHẢI: TỔNG QUAN ĐƠN HÀNG -->
+                    <div class="col-lg-4">
+                        <div class="checkout-container">
+                            <h4 class="section-title">Đơn hàng của bạn</h4>
+
+                            <div class="order-summary">
+                                <div th:each="item : ${cart}"
+                                    class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                    <div style="font-size: 0.9rem;">
+                                        <div class="fw-bold text-truncate" style="max-width: 180px;"
+                                            th:text="${item.name}"></div>
+                                        <div class="text-muted small">x <span th:text="${item.quantity}"></span></div>
+                                    </div>
+                                    <div class="fw-bold"
+                                        th:text="${#numbers.formatDecimal(item.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                    </div>
+                                </div>
+
+                                <div class="summary-row mt-3">
+                                    <span>Tạm tính:</span>
+                                    <span id="subtotalDisplay"
+                                        th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Phí vận chuyển:</span>
+                                    <span id="shippingDisplay" class="text-muted">Chọn tỉnh để xem phí</span>
+                                </div>
+                                <div th:if="${productDiscount > 0}" class="summary-row text-success">
+                                    <span>Giảm giá sản phẩm:</span>
+                                    <span id="discountDisplay"
+                                        th:text="'-' + ${#numbers.formatDecimal(productDiscount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                </div>
+
+                                <div class="summary-row summary-total">
+                                    <span>Tổng cộng:</span>
+                                    <span id="totalDisplay"
+                                        th:text="${#numbers.formatDecimal(totalAmount - productDiscount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-confirm">XÁC NHẬN ĐẶT HÀNG</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script th:inline="javascript">
+            /*<![CDATA[*/
+            const EXTERNAL_API = "https://provinces.open-api.vn/api";
+            const subtotal = /*[[${totalAmount}]]*/ 0;
+            const productDiscount = /*[[${productDiscount}]]*/ 0;
+
+            document.addEventListener("DOMContentLoaded", function () {
+                loadProvinces();
+            });
+
+            function loadProvinces() {
+                fetch('/api/location/provinces')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data && data.length > 0) {
+                            renderProvinces(data);
+                        } else {
+                            fetch(EXTERNAL_API + '/p/').then(r => r.json()).then(d => {
+                                renderProvinces((d || []).map(p => ({ code: String(p.code), fullName: p.name, name: p.name })));
+                            }).catch(() => showProvinceError());
+                        }
+                    })
+                    .catch(() => {
+                        fetch(EXTERNAL_API + '/p/').then(r => r.json()).then(d => {
+                            renderProvinces((d || []).map(p => ({ code: String(p.code), fullName: p.name, name: p.name })));
+                        }).catch(() => showProvinceError());
+                    });
+            }
+
+            function renderProvinces(data) {
+                let html = '<option value="">Chọn Tỉnh/Thành</option>';
+                (data || []).forEach(item => {
+                    const code = String(item.code);
+                    const name = (item.fullName || item.name || '').trim();
+                    if (name) html += '<option value="' + code + '">' + name + '</option>';
+                });
+                document.getElementById('province').innerHTML = html;
+            }
+
+            function showProvinceError() {
+                document.getElementById('province').innerHTML = '<option value="">Không tải được tỉnh thành</option>';
+            }
+
+            function loadDistricts() {
+                const provinceCode = document.getElementById('province').value;
+                const districtSelect = document.getElementById('district');
+                const wardSelect = document.getElementById('ward');
+
+                districtSelect.innerHTML = '<option value="">Chọn Quận/Huyện</option>';
+                wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+                wardSelect.disabled = true;
+
+                const provinceSelect = document.getElementById('province');
+                document.getElementById('province_name').value = provinceSelect.selectedIndex > 0 ? provinceSelect.options[provinceSelect.selectedIndex].text : '';
+                updateAddressString();
+
+                if (provinceCode) {
+                    fetch('/api/location/districts/' + provinceCode)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                let html = '<option value="">Chọn Quận/Huyện</option>';
+                                data.forEach(item => {
+                                    const name = (item.fullName || item.name || '').trim();
+                                    if (name) html += '<option value="' + item.code + '">' + name + '</option>';
+                                });
+                                districtSelect.innerHTML = html;
+                            } else {
+                                fetch(EXTERNAL_API + '/p/' + provinceCode + '?depth=2').then(r => r.json()).then(d => {
+                                    let html = '<option value="">Chọn Quận/Huyện</option>';
+                                    (d.districts || []).forEach(item => {
+                                        html += '<option value="' + String(item.code) + '">' + (item.name || '') + '</option>';
+                                    });
+                                    districtSelect.innerHTML = html;
+                                });
+                            }
+                            districtSelect.disabled = false;
+                            calculateShipping(provinceCode);
+                        })
+                        .catch(() => {
+                            fetch(EXTERNAL_API + '/p/' + provinceCode + '?depth=2').then(r => r.json()).then(d => {
+                                let html = '<option value="">Chọn Quận/Huyện</option>';
+                                (d.districts || []).forEach(item => {
+                                    html += '<option value="' + String(item.code) + '">' + (item.name || '') + '</option>';
+                                });
+                                districtSelect.innerHTML = html;
+                            }).catch(() => {});
+                            districtSelect.disabled = false;
+                            calculateShipping(provinceCode);
+                        });
+                } else {
+                    districtSelect.disabled = true;
+                    document.getElementById('shippingDisplay').textContent = 'Chọn tỉnh để xem phí';
+                    document.getElementById('shippingDisplay').className = 'text-muted';
+                    updateTotalDisplay(0);
+                }
+            }
+
+            function loadWards() {
+                const districtCode = document.getElementById('district').value;
+                const wardSelect = document.getElementById('ward');
+
+                wardSelect.innerHTML = '<option value="">Chọn Phường/Xã</option>';
+
+                const districtSelect = document.getElementById('district');
+                document.getElementById('district_name').value = districtSelect.selectedIndex > 0 ? districtSelect.options[districtSelect.selectedIndex].text : '';
+                updateAddressString();
+
+                if (districtCode) {
+                    fetch('/api/location/wards/' + districtCode)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data && data.length > 0) {
+                                let html = '<option value="">Chọn Phường/Xã</option>';
+                                data.forEach(item => {
+                                    const name = (item.fullName || item.name || '').trim();
+                                    if (name) html += '<option value="' + item.code + '">' + name + '</option>';
+                                });
+                                wardSelect.innerHTML = html;
+                            } else {
+                                fetch(EXTERNAL_API + '/d/' + districtCode + '?depth=2').then(r => r.json()).then(d => {
+                                    let html = '<option value="">Chọn Phường/Xã</option>';
+                                    (d.wards || []).forEach(item => {
+                                        html += '<option value="' + String(item.code) + '">' + (item.name || '') + '</option>';
+                                    });
+                                    wardSelect.innerHTML = html;
+                                });
+                            }
+                            wardSelect.disabled = false;
+                        })
+                        .catch(() => {
+                            fetch(EXTERNAL_API + '/d/' + districtCode + '?depth=2').then(r => r.json()).then(d => {
+                                let html = '<option value="">Chọn Phường/Xã</option>';
+                                (d.wards || []).forEach(item => {
+                                    html += '<option value="' + String(item.code) + '">' + (item.name || '') + '</option>';
+                                });
+                                wardSelect.innerHTML = html;
+                            }).catch(() => {});
+                            wardSelect.disabled = false;
+                        });
+                } else {
+                    wardSelect.disabled = true;
+                }
+            }
+
+            function calculateShipping(provinceCode) {
+                const el = document.getElementById('shippingDisplay');
+                el.textContent = 'Đang tính...';
+                el.className = '';
+                fetch('/api/shipping/calculate?provinceCode=' + encodeURIComponent(provinceCode) + '&subtotal=' + subtotal)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success !== false && data.fee != null) {
+                            const fee = Math.round(data.fee);
+                            el.textContent = fee.toLocaleString('vi-VN') + ' đ';
+                            el.className = '';
+                            updateTotalDisplay(fee);
+                        } else {
+                            el.textContent = '30.000 đ';
+                            updateTotalDisplay(30000);
+                        }
+                    })
+                    .catch(() => {
+                        el.textContent = '30.000 đ';
+                        el.className = 'text-muted';
+                        updateTotalDisplay(30000);
+                    });
+            }
+
+            function updateTotalDisplay(shippingFee) {
+                const total = subtotal + shippingFee - productDiscount;
+                const el = document.getElementById('totalDisplay');
+                if (el) el.textContent = Math.max(0, total).toLocaleString('vi-VN') + ' đ';
+            }
+
+            function updateAddressString() {
+                const province = document.getElementById('province_name').value;
+                const district = document.getElementById('district_name').value;
+                const wardSelect = document.getElementById('ward');
+                const wardOption = wardSelect.options[wardSelect.selectedIndex];
+                const ward = wardOption ? wardOption.text : '';
+                const detail = document.getElementById('address_detail').value;
+
+                if (wardSelect.value && wardOption) {
+                    document.getElementById('ward_name').value = ward;
+                }
+
+                if (province && district && ward && detail && province !== 'Chọn Tỉnh/Thành' && district !== 'Chọn Quận/Huyện' && ward !== 'Chọn Phường/Xã') {
+                    const fullAddress = detail + ', ' + ward + ', ' + district + ', ' + province;
+                    document.getElementById('fullAddress').value = fullAddress;
+                } else if (detail) {
+                    document.getElementById('fullAddress').value = detail;
+                }
+            }
+
+            function validateAndSubmitCheckout() {
+                updateAddressString();
+                const fullAddr = document.getElementById('fullAddress').value;
+                const province = document.getElementById('province').value;
+                if (!province) {
+                    alert('Vui lòng chọn Tỉnh/Thành phố');
+                    return false;
+                }
+                if (!fullAddr || fullAddr.trim() === '') {
+                    alert('Vui lòng nhập địa chỉ đầy đủ');
+                    return false;
+                }
+                return true;
+            }
+            /*]]>*/
+        </script>
+    </th:block>
+</body>
+
+</html>

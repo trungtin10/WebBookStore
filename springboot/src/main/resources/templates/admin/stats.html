@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Thống Kê & Báo Cáo | Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: .75rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background-color: #fff;
+            border-bottom: none;
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+            border-radius: .75rem;
+        }
+
+        .stat-card .icon {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .bg-success-light {
+            background-color: #28a745;
+        }
+
+        .bg-info-light {
+            background-color: #17a2b8;
+        }
+
+        .bg-warning-light {
+            background-color: #ffc107;
+            color: #333 !important;
+        }
+
+        .bg-primary-light {
+            background-color: #007bff;
+        }
+
+        .bg-danger-light {
+            background-color: #dc3545;
+        }
+
+        .order-status-box {
+            padding: 1rem;
+            border-radius: .5rem;
+            color: #fff;
+            text-align: center;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: .35em .65em;
+            font-size: .75em;
+            font-weight: 700;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: .25rem;
+        }
+
+        .status-COMPLETED {
+            background-color: #28a745;
+        }
+
+        .status-PENDING {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+
+        .status-CONFIRMED {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .status-PROCESSING {
+            background-color: #e2e3e5;
+            color: #41464b;
+        }
+
+        .status-SHIPPED {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .status-DELIVERING {
+            background-color: #cff4fc;
+            color: #055160;
+        }
+
+        .status-CANCELLED {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div th:replace="~{admin/partials/layout :: sidebar}"></div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-chart-pie me-2"></i> THỐNG KÊ & BÁO CÁO</h1>
+                    <div th:replace="~{admin/partials/layout :: topbar}"></div>
+                </div>
+
+                <!-- Tổng quan Doanh thu và Đơn hàng -->
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="stat-card bg-success-light p-4 h-100">
+                            <div class="icon"><i class="fas fa-dollar-sign"></i></div>
+                            <p class="mb-2 fs-5">Tổng Doanh Thu (Đã Hoàn Thành)</p>
+                            <h3
+                                th:text="${#numbers.formatDecimal(totalRevenue != null ? totalRevenue : 0, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="stat-card bg-info-light p-4 h-100">
+                            <div class="icon"><i class="fas fa-shopping-cart"></i></div>
+                            <p class="mb-2 fs-5">Tổng Số Đơn Hàng</p>
+                            <h3 th:text="${totalOrders != null ? totalOrders : 0}"></h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tình hình đơn hàng -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title fw-bold mb-0">Tình Hình Đơn Hàng</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <div class="order-status-box" style="background-color: #fff3cd; color: #664d03;">
+                                    <strong>Chờ xác nhận</strong><br><span
+                                        th:text="${orderStats != null ? orderStats['PENDING'] : 0}"></span></div>
+                            </div>
+                            <div class="col">
+                                <div class="order-status-box" style="background-color: #cfe2ff; color: #084298;">
+                                    <strong>Đã xác nhận</strong><br><span
+                                        th:text="${orderStats != null ? orderStats['CONFIRMED'] : 0}"></span></div>
+                            </div>
+                            <div class="col">
+                                <div class="order-status-box" style="background-color: #cff4fc; color: #055160;">
+                                    <strong>Đang giao</strong><br><span
+                                        th:text="${orderStats != null ? orderStats['DELIVERING'] : 0}"></span></div>
+                            </div>
+                            <div class="col">
+                                <div class="order-status-box" style="background-color: #d1e7dd; color: #0f5132;">
+                                    <strong>Hoàn thành</strong><br><span
+                                        th:text="${orderStats != null ? orderStats['COMPLETED'] : 0}"></span></div>
+                            </div>
+                            <div class="col">
+                                <div class="order-status-box" style="background-color: #f8d7da; color: #842029;">
+                                    <strong>Đã hủy</strong><br><span
+                                        th:text="${orderStats != null ? orderStats['CANCELLED'] : 0}"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Biểu đồ doanh thu -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title fw-bold mb-0">Doanh Thu Gần Đây (Đơn Hoàn Thành)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${chartData != null and !chartData.empty}">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                        <div th:if="${chartData == null or chartData.empty}">
+                            <p class="text-center text-muted py-5">Chưa có dữ liệu doanh thu để vẽ biểu đồ.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chi tiết đơn hàng gần đây -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title fw-bold mb-0">Chi Tiết Đơn Hàng Gần Đây</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-3">Mã ĐH</th>
+                                        <th>Khách Hàng</th>
+                                        <th>Ngày Đặt</th>
+                                        <th>Tổng Tiền</th>
+                                        <th>Trạng Thái</th>
+                                        <th class="pe-3">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${recentOrders == null or recentOrders.empty}">
+                                        <td colspan="6" class="text-center text-muted py-4">Chưa có đơn hàng nào.</td>
+                                    </tr>
+                                    <tr th:each="order : ${recentOrders}">
+                                        <td class="ps-3" th:text="'#' + ${order.id}"></td>
+                                        <td>
+                                            <div class="fw-bold"
+                                                th:text="${order.user != null ? order.user.fullName : 'Khách vãng lai'}">
+                                            </div>
+                                            <div class="small text-muted"
+                                                th:text="${order.user != null ? order.user.phone : 'Chưa có SĐT'}">
+                                            </div>
+                                        </td>
+                                        <td th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy')}"></td>
+                                        <td
+                                            th:text="${#numbers.formatDecimal(order.finalTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                                        </td>
+                                        <td><span th:class="'status-badge status-' + ${order.status}"
+                                                th:text="${order.status}"></span></td>
+                                        <td class="pe-3">
+                                            <button class="btn btn-sm btn-outline-info"
+                                                th:onclick="'showOrderDetail(\'' + ${order.id} + '\')'"
+                                                title="Xem chi tiết">
+                                                <i class="fas fa-eye"></i> Xem
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Chi Tiết Đơn Hàng -->
+    <div class="modal fade" id="orderDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Chi tiết đơn hàng <span id="modalOrderId"
+                            class="text-primary"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalOrderContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pass chart data from Spring model to JS variables -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var labels = /*[[${chartLabels}]]*/[];
+        var data = /*[[${chartData}]]*/[];
+
+        if (data && data.length > 0) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doanh thu (VNĐ)',
+                        data: data,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => value.toLocaleString('vi-VN') + ' đ' }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: context => context.parsed.y.toLocaleString('vi-VN') + ' đ'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        /*]]>*/
+
+        function showOrderDetail(orderId) {
+            document.getElementById('modalOrderId').innerText = '#' + orderId;
+            document.getElementById('modalOrderContent').innerHTML = '<div class="text-center py-5"><div class="spinner-border"></div></div>';
+            new bootstrap.Modal(document.getElementById('orderDetailModal')).show();
+
+            const detailUrl = /*[[@{/admin/orders/detail/}]]*/ '/admin/orders/detail/';
+            fetch(detailUrl + orderId)
+                .then(res => {
+                    if (!res.ok) throw new Error('Mã lỗi: ' + res.status);
+                    return res.json();
+                })
+                .then(order => {
+                    const formatDate = (dateStr) => {
+                        if (!dateStr) return '---';
+                        try {
+                            const date = new Date(dateStr);
+                            return date.toLocaleString('vi-VN', { 
+                                day: '2-digit', month: '2-digit', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                            });
+                        } catch(e) { return dateStr; }
+                    };
+
+                    const formatDateOnly = (dateStr) => {
+                        if (!dateStr) return '---';
+                        try {
+                            const date = new Date(dateStr);
+                            return date.toLocaleDateString('vi-VN');
+                        } catch(e) { return dateStr; }
+                    };
+
+                    const statusMap = {
+                        'PENDING': 'Chờ xác nhận',
+                        'CONFIRMED': 'Đã xác nhận',
+                        'PROCESSING': 'Đang xử lý',
+                        'SHIPPED': 'Đã giao VC',
+                        'DELIVERING': 'Đang giao hàng',
+                        'COMPLETED': 'Đã giao',
+                        'CANCELLED': 'Đã hủy'
+                    };
+                    const statusText = statusMap[order.status] || order.status;
+                    const statusClass = `status-${order.status}`;
+
+                    const paymentText = order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán';
+                    const paymentClass = order.paymentStatus === 'PAID' ? 'bg-success' : 'bg-warning';
+
+                    let itemsHtml = '';
+                    if (order.orderDetails && Array.isArray(order.orderDetails)) {
+                        order.orderDetails.forEach(item => {
+                            itemsHtml += `
+                            <div class="d-flex align-items-center mb-3 border-bottom pb-2">
+                                <img src="${item.product.imageUrl || '/images/default.jpg'}" width="50" height="70" class="me-3 rounded shadow-sm" style="object-fit: cover;">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold small text-dark">${item.product.name}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">Số lượng: <span class="fw-bold">${item.quantity}</span></div>
+                                </div>
+                                <div class="fw-bold text-end" style="min-width: 100px;">${Number(item.priceAtPurchase).toLocaleString('vi-VN')} đ</div>
+                            </div>`;
+                        });
+                    }
+
+                    let customerName = order.shippingName || (order.user ? order.user.fullName : 'Khách vãng lai');
+                    let customerPhone = order.shippingPhone || (order.user ? order.user.phone : '---');
+                    let customerAddress = order.shippingAddress || '---';
+
+                    let html = `
+                    <div id="printableArea" style="font-family: 'Inter', sans-serif;">
+                        <div class="text-center mb-4 pb-3 border-bottom">
+                            <h4 class="fw-bold text-uppercase brand-font m-0" style="letter-spacing: 1px;">HÓA ĐƠN CHI TIẾT</h4>
+                            <p class="text-muted small mb-0">Mã đơn hàng: <span class="fw-bold text-primary">#${order.id}</span></p>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-6">
+                                <div class="info-label text-muted small fw-bold text-uppercase mb-1">Khách hàng</div>
+                                <div class="fw-bold text-dark">${customerName}</div>
+                                <div class="small text-muted">${customerPhone}</div>
+                                <div class="small text-muted mt-2">${customerAddress}</div>
+                                ${order.orderNote ? `<div class="mt-2 text-danger small"><strong>Ghi chú:</strong> ${order.orderNote}</div>` : ''}
+                            </div>
+                            <div class="col-6 text-end">
+                                <div class="info-label text-muted small fw-bold text-uppercase mb-1">Thông tin đơn hàng</div>
+                                <div class="small">Ngày đặt: <strong>${formatDate(order.orderDate)}</strong></div>
+                                <div class="small">PT thanh toán: <strong>${order.paymentMethod || 'COD'}</strong></div>
+                                <div class="mt-2">
+                                    <span class="status-badge ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="mt-1">
+                                    <span class="badge ${paymentClass} rounded-pill">${paymentText}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-light p-3 rounded-3 mb-4">
+                            <div class="row text-center">
+                                <div class="col-6 border-end">
+                                    <div class="text-muted small">Mã vận đơn</div>
+                                    <div class="fw-bold text-primary">${order.trackingCode || '---'}</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Dự kiến giao</div>
+                                    <div class="fw-bold">${formatDateOnly(order.expectedDeliveryDate)}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold border-bottom pb-2 mb-3">Sản phẩm đã đặt</h6>
+                        ${itemsHtml}
+
+                        <div class="row mt-4 pt-3 border-top">
+                            <div class="col-6">
+                                <button class="btn btn-outline-dark btn-sm rounded-pill d-print-none" onclick="window.print()">
+                                    <i class="fas fa-print me-1"></i> In ngay
+                                </button>
+                                <a href="/admin/orders/view/${order.id}" class="btn btn-link btn-sm d-print-none">Chi tiết nâng cao</a>
+                            </div>
+                            <div class="col-6 text-end">
+                                <div class="d-flex justify-content-between mb-1 small">
+                                    <span class="text-muted">Tạm tính:</span>
+                                    <span>${Number(order.totalMoney).toLocaleString('vi-VN')} đ</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 small">
+                                    <span class="text-muted">Phí ship:</span>
+                                    <span>${Number(order.shippingFee || 0).toLocaleString('vi-VN')} đ</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2 small text-success">
+                                    <span>Giảm giá:</span>
+                                    <span>-${Number(order.discountAmount || 0).toLocaleString('vi-VN')} đ</span>
+                                </div>
+                                <div class="d-flex justify-content-between border-top pt-2">
+                                    <span class="fw-bold">TỔNG CỘNG:</span>
+                                    <span class="fw-bold fs-5 text-danger">${Number(order.finalTotal).toLocaleString('vi-VN')} đ</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                    document.getElementById('modalOrderContent').innerHTML = html;
+                })
+                .catch(err => {
+                    document.getElementById('modalOrderContent').innerHTML = '<p class="text-danger p-3">Lỗi tải dữ liệu: ' + err.message + '</p>';
+                });
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <title>Trang chủ Bookstore</title>
+    <th:block layout:fragment="css">
+        <style>
+            body {
+                background-color: #f8f9fa;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            }
+
+            .book-card {
+                transition: transform 0.3s, box-shadow 0.3s;
+                border: none;
+                border-radius: 8px;
+                overflow: hidden;
+                cursor: pointer;
+                background: white;
+                height: 100%;
+            }
+
+            .book-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+            }
+
+            .card-img-top {
+                height: 260px;
+                object-fit: cover;
+                transition: transform 0.5s;
+            }
+
+            .book-card:hover .card-img-top {
+                transform: scale(1.03);
+            }
+
+            .card-body {
+                padding: 12px;
+                text-align: left;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            .card-title {
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #333;
+                margin-bottom: 5px;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                height: 42px;
+                line-height: 1.4;
+            }
+
+            .card-title:hover {
+                color: #C92127;
+            }
+
+            .price-tag {
+                font-size: 1.1rem;
+                color: #C92127;
+                font-weight: 700;
+                display: block;
+                margin-top: 5px;
+            }
+
+            .rating-sold {
+                display: flex;
+                align-items: center;
+                font-size: 0.8rem;
+                color: #777;
+                margin-top: 8px;
+            }
+
+            .stars {
+                color: #FFD700;
+                margin-right: 5px;
+            }
+
+            a.product-link {
+                text-decoration: none;
+                color: inherit;
+                display: block;
+                height: 100%;
+            }
+
+            .section-title {
+                position: relative;
+                padding-bottom: 15px;
+                margin-bottom: 25px;
+                font-weight: 700;
+                color: #333;
+                text-transform: uppercase;
+                font-size: 1.4rem;
+            }
+
+            .section-title::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 80px;
+                height: 3px;
+                background-color: #C92127;
+            }
+
+            .empty-category {
+                text-align: center;
+                padding: 60px 20px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            }
+
+            .empty-icon {
+                font-size: 4rem;
+                color: #ddd;
+                margin-bottom: 20px;
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div th:if="${keyword == null and searchError == null and categoryName == null}" class="container mb-5 mt-4">
+            <div class="p-5 mb-4 bg-dark rounded-3 text-white"
+                style="background: linear-gradient(45deg, #1a1a2e, #16213e);">
+                <div class="container-fluid py-3">
+                    <h1 class="display-5 fw-bold">Chào mừng đến với Bookstore</h1>
+                    <p class="col-md-8 fs-4">Khám phá thế giới tri thức qua hàng ngàn đầu sách hấp dẫn.</p>
+                    <button class="btn btn-warning btn-lg" type="button">Xem ngay</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="container pb-5 mt-4">
+            <div th:if="${searchError}" class="alert alert-warning text-center mb-4">
+                <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="${searchError}"></span>
+            </div>
+
+            <h3 th:if="${keyword}" class="section-title">Kết quả tìm kiếm cho: "<span class="text-danger"
+                    th:text="${keyword}"></span>"</h3>
+            <h3 th:if="${categoryName}" class="section-title">Danh mục: <span class="text-primary"
+                    th:text="${categoryName}"></span></h3>
+            <h3 th:if="${keyword == null and categoryName == null}" class="section-title">Sách Mới Phát Hành</h3>
+
+            <div th:if="${newArrivals != null and not newArrivals.empty}"
+                class="row row-cols-2 row-cols-md-4 row-cols-lg-5 g-3">
+                <div class="col" th:each="item : ${newArrivals}">
+                    <a th:href="@{'/product/' + ${item.id}}" class="product-link">
+                        <div class="card book-card shadow-sm">
+                            <div style="overflow: hidden;">
+                                <img th:src="@{${item.imageUrl != null ? (item.imageUrl.startsWith('http') or item.imageUrl.startsWith('/uploads/') ? item.imageUrl : '/uploads/' + item.imageUrl) : '/uploads/default.jpg'}}"
+                                    class="card-img-top" th:alt="${item.name}"
+                                    th:onerror="'this.src=\'/uploads/default.jpg\''">
+                            </div>
+
+                            <div class="card-body">
+                                <h5 class="card-title" th:title="${item.name}" th:text="${item.name}"></h5>
+                                <span class="price-tag"
+                                    th:text="${#numbers.formatDecimal(item.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                <div class="rating-sold">
+                                    <div class="stars">
+                                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                                            class="fas fa-star"></i><i class="fas fa-star"></i><i
+                                            class="fas fa-star-half-alt"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${newArrivals == null or newArrivals.empty}" class="empty-category">
+                <i class="fas fa-box-open empty-icon"></i>
+                <h4 class="text-muted mb-3">Chưa có sản phẩm nào</h4>
+                <p class="text-secondary">Rất tiếc, chúng tôi chưa cập nhật sản phẩm cho danh mục này.</p>
+                <a th:href="@{/}" class="btn btn-outline-primary mt-3">Xem tất cả sách</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

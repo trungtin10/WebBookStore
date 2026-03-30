@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{admin/layout/admin_layout}">
+
+<head>
+    <title>Dashboard</title>
+    <th:block layout:fragment="css">
+        <style>
+            .stat-card { color: white; position: relative; overflow: hidden; transition: transform 0.2s; }
+            .stat-card:hover { transform: translateY(-5px); }
+            .stat-card .icon { position: absolute; top: 50%; right: 20px; transform: translateY(-50%); font-size: 3.5rem; opacity: 0.2; }
+            .bg-gradient-primary { background: linear-gradient(45deg, #4e73df, #224abe); }
+            .bg-gradient-success { background: linear-gradient(45deg, #1cc88a, #13855c); }
+            .bg-gradient-info { background: linear-gradient(45deg, #36b9cc, #258391); }
+            .bg-gradient-warning { background: linear-gradient(45deg, #f6c23e, #dda20a); }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="pageTitle">TỔNG QUAN HỆ THỐNG</div>
+
+    <div layout:fragment="content">
+        <th:block th:with="activePage='dashboard'"></th:block>
+
+        <!-- Thống kê nhanh -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card bg-gradient-primary h-100 py-2">
+                    <div class="card-body">
+                        <div class="text-xs fw-bold text-uppercase mb-1">Doanh thu</div>
+                        <div class="h5 mb-0 fw-bold" th:text="${#numbers.formatDecimal(stats.revenue, 0, 'COMMA', 0, 'POINT')} + ' đ'"></div>
+                        <i class="fas fa-dollar-sign icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card bg-gradient-success h-100 py-2">
+                    <div class="card-body">
+                        <div class="text-xs fw-bold text-uppercase mb-1">Đơn hàng</div>
+                        <div class="h5 mb-0 fw-bold" th:text="${stats.orders}"></div>
+                        <i class="fas fa-clipboard-list icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card bg-gradient-info h-100 py-2">
+                    <div class="card-body">
+                        <div class="text-xs fw-bold text-uppercase mb-1">Khách hàng</div>
+                        <div class="h5 mb-0 fw-bold" th:text="${stats.users}"></div>
+                        <i class="fas fa-users icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card stat-card bg-gradient-warning h-100 py-2">
+                    <div class="card-body">
+                        <div class="text-xs fw-bold text-uppercase mb-1">Sản Phẩm</div>
+                        <div class="h5 mb-0 fw-bold" th:text="${stats.products}"></div>
+                        <i class="fas fa-book icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card stat-card h-100 py-2" style="background: linear-gradient(45deg, #6610f2, #6f42c1);">
+                    <div class="card-body">
+                        <div class="text-xs fw-bold text-uppercase mb-1 text-white">Danh mục</div>
+                        <div class="h5 mb-0 fw-bold text-white" th:text="${stats.categories}"></div>
+                        <i class="fas fa-list icon"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card h-100 py-2" style="background: linear-gradient(45deg, #e83e8c, #d63384);">
+                    <div class="card-body">
+                        <div class="text-xs fw-bold text-uppercase mb-1 text-white">Đánh giá mới</div>
+                        <div class="h5 mb-0 fw-bold text-white" th:text="${stats.reviews}"></div>
+                        <i class="fas fa-star icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Đơn hàng chờ xử lý -->
+            <div class="col-lg-7 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center bg-white">
+                        <h6 class="m-0 fw-bold text-primary">Đơn hàng chờ xử lý</h6>
+                        <a th:href="@{/admin/orders}" class="btn btn-sm btn-outline-primary">Xem tất cả</a>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${pendingOrders == null or pendingOrders.empty}" class="text-center text-muted p-4">Không có đơn hàng nào.</div>
+                        <div class="table-responsive" th:if="${pendingOrders != null and !pendingOrders.empty}">
+                            <table class="table table-hover align-middle">
+                                <thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Thao tác</th></tr></thead>
+                                <tbody>
+                                    <tr th:each="order : ${pendingOrders}">
+                                        <td th:text="'#' + ${order.id}"></td>
+                                        <td th:text="${#temporals.format(order.orderDate, 'dd/MM/yyyy HH:mm')}"></td>
+                                        <td class="fw-bold text-danger" th:text="${#numbers.formatDecimal(order.finalTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                                        <td><a th:href="@{'/admin/orders/view/' + ${order.id}}" class="btn btn-sm btn-light border">Xử lý</a></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Truy cập nhanh -->
+            <div class="col-lg-5 mb-4">
+                <div class="card shadow h-100">
+                    <div class="card-header py-3 bg-white"><h6 class="m-0 fw-bold text-primary">Truy cập nhanh</h6></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6"><a th:href="@{/admin/products}" class="btn btn-outline-primary w-100 py-3"><i class="fas fa-boxes d-block mb-2"></i> Sản phẩm</a></div>
+                            <div class="col-6"><a th:href="@{/admin/orders}" class="btn btn-outline-success w-100 py-3"><i class="fas fa-shopping-cart d-block mb-2"></i> Đơn hàng</a></div>
+                            <div class="col-6"><a th:href="@{/admin/categories}" class="btn btn-outline-info w-100 py-3"><i class="fas fa-list d-block mb-2"></i> Danh mục</a></div>
+                            <div class="col-6"><a th:href="@{/admin/user}" class="btn btn-outline-secondary w-100 py-3"><i class="fas fa-users-cog d-block mb-2"></i> Người dùng</a></div>
+                            <div class="col-6"><a th:href="@{/admin/coupons}" class="btn btn-outline-warning w-100 py-3"><i class="fas fa-ticket-alt d-block mb-2"></i> Giảm giá</a></div>
+                            <div class="col-6"><a th:href="@{/admin/reviews}" class="btn btn-outline-danger w-100 py-3"><i class="fas fa-comments d-block mb-2"></i> Phản hồi</a></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

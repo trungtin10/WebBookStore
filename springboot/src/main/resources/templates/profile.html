@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <title>Thông tin tài khoản - BookTotal</title>
+    <th:block layout:fragment="css">
+        <style>
+            body {
+                background-color: #f8f9fa;
+                font-family: 'Segoe UI', sans-serif;
+            }
+
+            .profile-wrapper {
+                margin-top: 30px;
+                margin-bottom: 50px;
+            }
+
+            .profile-card {
+                background: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+                padding: 25px 30px;
+            }
+
+            .profile-title {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 5px;
+            }
+
+            .profile-subtitle {
+                font-size: 0.9rem;
+                color: #6c757d;
+                margin-bottom: 20px;
+            }
+
+            .section-header {
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: #495057;
+                text-transform: uppercase;
+                font-size: 0.9rem;
+            }
+
+            .form-label {
+                font-weight: 600;
+                font-size: 0.9rem;
+            }
+
+            .btn-primary-custom {
+                background: linear-gradient(45deg, #ffc107, #ffb300);
+                border-color: #ffb300;
+                color: #212529;
+                font-weight: 700;
+                box-shadow: 0 3px 8px rgba(255, 193, 7, 0.4);
+            }
+
+            .btn-primary-custom:hover {
+                background: linear-gradient(45deg, #ffca2c, #ffc107);
+                border-color: #ffca2c;
+                color: #212529;
+                box-shadow: 0 4px 10px rgba(255, 193, 7, 0.6);
+            }
+
+            .text-muted-small {
+                font-size: 0.8rem;
+                color: #6c757d;
+            }
+
+            .toggle-password {
+                cursor: pointer;
+            }
+
+            @media (max-width: 768px) {
+                .profile-card {
+                    padding: 20px;
+                }
+            }
+        </style>
+    </th:block>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container profile-wrapper">
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="profile-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <div class="profile-title"><i class="fas fa-user-circle me-2 text-primary"></i>Thông tin
+                                    tài khoản</div>
+                                <div class="profile-subtitle">Quản lý thông tin cá nhân và bảo mật tài khoản của bạn.
+                                </div>
+                                <a th:href="@{/profile/orders}" class="btn btn-sm btn-outline-primary mt-2">
+                                    <i class="fas fa-shopping-bag me-1"></i> Xem lịch sử đơn hàng
+                                </a>
+                            </div>
+                            <span class="badge bg-secondary text-uppercase">
+                                <i class="fas fa-user-tag me-1"></i>
+                                <span
+                                    th:text="${userInfo.role != null and userInfo.role.toUpperCase() == 'ADMIN' ? 'Admin' : 'User'}"></span>
+                            </span>
+                        </div>
+
+                        <div th:if="${error}" class="alert alert-danger d-flex align-items-center" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <span th:text="${error}"></span>
+                        </div>
+                        <div th:if="${success}" class="alert alert-success d-flex align-items-center" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <span th:text="${success}"></span>
+                        </div>
+
+                        <div class="row g-4">
+                            <!-- Thông tin cá nhân -->
+                            <div class="col-md-6">
+                                <div class="mb-3 section-header">
+                                    <i class="fas fa-id-card me-1 text-primary"></i> Thông tin cá nhân
+                                </div>
+                                <form th:action="@{/profile}" method="POST" autocomplete="off">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tên đăng nhập</label>
+                                        <input type="text" class="form-control" th:value="${userInfo.username}"
+                                            disabled>
+                                        <div class="text-muted-small mt-1">Tên đăng nhập không thể thay đổi.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Vai trò</label>
+                                        <input type="text" class="form-control"
+                                            th:value="${userInfo.role != null and userInfo.role.toUpperCase() == 'ADMIN' ? 'Admin' : 'User'}"
+                                            disabled>
+                                        <div class="text-muted-small mt-1">Vai trò không thể thay đổi.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Họ và tên</label>
+                                        <input type="text" class="form-control" name="fullName"
+                                            th:value="${userInfo.fullName}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="email"
+                                            th:value="${userInfo.email}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Số điện thoại</label>
+                                        <input type="text" class="form-control" name="phone"
+                                            th:value="${userInfo.phone}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Địa chỉ</label>
+                                        <textarea class="form-control" name="address" rows="2"
+                                            th:text="${userInfo.address}"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary-custom">
+                                        <i class="fas fa-save me-1"></i> Lưu thay đổi
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Đổi mật khẩu -->
+                            <div class="col-md-6" id="change-password">
+                                <div class="mb-3 section-header">
+                                    <i class="fas fa-key me-1 text-warning"></i> Đổi mật khẩu
+                                </div>
+                                <form th:action="@{/profile/change-password}" method="POST" autocomplete="off">
+                                    <div class="mb-3">
+                                        <label class="form-label">Mật khẩu hiện tại</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" name="currentPassword" required>
+                                            <span class="input-group-text toggle-password">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Mật khẩu mới</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" name="newPassword" required>
+                                            <span class="input-group-text toggle-password">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                        </div>
+                                        <div class="text-muted-small mt-1">Mật khẩu tối thiểu 6 ký tự, bao gồm chữ hoa,
+                                            chữ thường và ký tự đặc biệt.</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Nhập lại mật khẩu mới</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" name="confirmPassword" required>
+                                            <span class="input-group-text toggle-password">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-warning fw-semibold">
+                                        <i class="fas fa-sync-alt me-1"></i> Cập nhật mật khẩu
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <th:block layout:fragment="script">
+        <script>
+            document.querySelectorAll('.toggle-password').forEach(button => {
+                button.addEventListener('click', function () {
+                    const input = this.parentElement.querySelector('input');
+                    const icon = this.querySelector('i');
+
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            });
+        </script>
+    </th:block>
+</body>
+
+</html>

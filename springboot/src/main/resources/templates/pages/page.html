@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <title th:text="${title} + ' - Bookstore'"></title>
+    <style>
+        .static-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+
+        .static-title {
+            color: #C92127;
+            font-weight: 700;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 15px;
+        }
+
+        .static-content {
+            line-height: 1.8;
+            color: #444;
+        }
+
+        .static-content h5 {
+            color: #333;
+            font-weight: 600;
+            margin-top: 25px;
+        }
+
+        .static-content ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <div class="static-container">
+                <h2 class="static-title" th:text="${title}"></h2>
+                <div class="static-content" th:utext="${content}">
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

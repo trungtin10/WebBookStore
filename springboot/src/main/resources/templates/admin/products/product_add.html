@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Thêm Mới Sách | Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #eee;
+            padding: 20px 30px;
+            border-radius: 12px 12px 0 0 !important;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-control:focus {
+            border-color: #C92127;
+            box-shadow: 0 0 0 3px rgba(201, 33, 39, 0.1);
+        }
+
+        .btn-save {
+            background-color: #C92127;
+            color: white;
+            font-weight: 600;
+            padding: 10px 30px;
+            border-radius: 8px;
+            border: none;
+            transition: 0.3s;
+        }
+
+        .btn-save:hover {
+            background-color: #a11b20;
+            transform: translateY(-2px);
+        }
+
+        .upload-box {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            background: #fff;
+        }
+
+        .upload-box:hover {
+            border-color: #C92127;
+            background: #fff5f5;
+        }
+
+        #previewImg {
+            max-height: 200px;
+            border-radius: 8px;
+            display: none;
+            margin: 0 auto;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div th:replace="~{admin/partials/layout :: sidebar}"></div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold text-dark"><i class="fas fa-plus-circle text-danger me-2"></i> Thêm Sách Mới</h3>
+                    <div>
+                        <a th:href="@{/admin/products}" class="btn btn-outline-secondary me-3"><i
+                                class="fas fa-arrow-left me-2"></i> Quay lại</a>
+                        <div th:replace="~{admin/partials/layout :: topbar}" class="d-inline-block"></div>
+                    </div>
+                </div>
+
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <form th:action="@{/admin/products/add}" method="POST" enctype="multipart/form-data"
+                    th:object="${product}">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <!-- Basic info -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Thông tin chung</h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tên sách <span class="text-danger">*</span></label>
+                                        <input type="text" th:field="*{name}" class="form-control"
+                                            placeholder="Nhập tên sách..." required>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Tác giả</label>
+                                            <input type="text" th:field="*{authorName}" class="form-control"
+                                                placeholder="Nhập tên tác giả...">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Danh mục <span
+                                                    class="text-danger">*</span></label>
+                                            <select th:field="*{category.id}" class="form-select" required>
+                                                <option value="">-- Chọn Danh mục --</option>
+                                                <option th:each="c : ${categories}" th:value="${c.id}"
+                                                    th:text="${c.name}"></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Mô tả sản phẩm</label>
+                                        <textarea th:field="*{description}" class="form-control" rows="8"
+                                            placeholder="Nhập mô tả sản phẩm"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Publishing info -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Chi tiết xuất bản</h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Nhà cung cấp</label>
+                                            <input type="text" th:field="*{supplierName}" class="form-control"
+                                                placeholder="Nhập tên Nhà cung cấp...">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Nhà xuất bản</label>
+                                            <input type="text" th:field="*{publisherName}" class="form-control"
+                                                placeholder="Nhập tên NXB...">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Năm xuất bản</label>
+                                            <input type="number" th:field="*{publicationYear}" class="form-control"
+                                                placeholder="VD: 2024" min="1900">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Hình thức bìa</label>
+                                            <select th:field="*{coverType}" class="form-select">
+                                                <option value="Bìa Mềm">Bìa Mềm</option>
+                                                <option value="Bìa Cứng">Bìa Cứng</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Số trang</label>
+                                            <input type="number" th:field="*{pages}" class="form-control"
+                                                placeholder="VD: 200" min="1">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label class="form-label">Ngôn ngữ</label>
+                                            <select th:field="*{language}" class="form-select">
+                                                <option value="Tiếng Việt">Tiếng Việt</option>
+                                                <option value="Tiếng Anh">Tiếng Anh</option>
+                                                <option value="Khác">Khác</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="col-lg-4">
+                            <!-- Price & Inventory -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Giá & Kho hàng</h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Giá bán (VNĐ) <span
+                                                class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <input type="number" th:field="*{price}"
+                                                class="form-control fw-bold text-danger" required min="0">
+                                            <span class="input-group-text">₫</span>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Số lượng kho <span
+                                                class="text-danger">*</span></label>
+                                        <input type="number" th:field="*{quantity}" class="form-control" required
+                                            min="0">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Trạng thái hiển thị</label>
+                                        <select th:field="*{isHidden}" class="form-select">
+                                            <option value="false">Hiển thị (Khách hàng có thể thấy)</option>
+                                            <option value="true">Đang ẩn (Tạm khóa/Hết hàng)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Image Upload -->
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Hình ảnh</h5>
+                                </div>
+                                <div class="card-body p-4 text-center">
+                                    <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+                                        <img id="previewImg" src="#" alt="Preview">
+                                        <div id="uploadPlaceholder">
+                                            <i class="fas fa-cloud-upload-alt fa-3x text-secondary mb-2"></i>
+                                            <p class="text-muted small mb-0">Click để tải ảnh lên (Không bắt buộc)</p>
+                                        </div>
+                                    </div>
+                                    <input type="file" name="imageFile" id="fileInput" class="d-none" accept="image/*"
+                                        onchange="previewFile()">
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-save w-100 py-3">
+                                    <i class="fas fa-save me-2"></i> LƯU SẢN PHẨM
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function previewFile() {
+            const preview = document.getElementById('previewImg');
+            const placeholder = document.getElementById('uploadPlaceholder');
+            const file = document.getElementById('fileInput').files[0];
+            const reader = new FileReader();
+
+            reader.onloadend = function () {
+                preview.src = reader.result;
+                preview.style.display = 'block';
+                placeholder.style.display = 'none';
+            }
+
+            if (file) reader.readAsDataURL(file);
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        tinymce.init({
+            selector: 'textarea[name="description"]',
+            height: 400,
+            plugins: 'advlist autolink lists link image charmap preview anchor pagebreak',
+            toolbar_mode: 'floating',
+            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:16px }'
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

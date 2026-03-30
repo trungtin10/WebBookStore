@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layout}">
+
+<head>
+    <title>Chi tiết đơn hàng - BookTotal</title>
+    <style>
+        .progress-track { display: flex; margin-bottom: 30px; position: relative; }
+        .step { flex: 1; text-align: center; position: relative; font-size: 0.75rem; color: #999; z-index: 2; }
+        .progress-line { position: absolute; top: 12px; left: 10%; width: 80%; height: 3px; background-color: #eee; z-index: 1; }
+        .progress-line-fill { height: 100%; background-color: #2ecc71; transition: width 0.5s; }
+        .step-icon { width: 28px; height: 28px; background-color: #eee; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; color: white; border: 2px solid white; }
+        .step.active { color: #2ecc71; font-weight: 700; }
+        .step.active .step-icon { background-color: #2ecc71; }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container py-5">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a th:href="@{/}">Trang chủ</a></li>
+                    <li class="breadcrumb-item"><a th:href="@{/profile/orders}">Lịch sử đơn hàng</a></li>
+                    <li class="breadcrumb-item active" th:text="'Đơn hàng #' + ${order.id}"></li>
+                </ol>
+            </nav>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Trạng thái đơn hàng</h5>
+                        </div>
+                        <div class="card-body">
+                            <div th:if="${order.status != 'CANCELLED'}" class="progress-track mt-3">
+                                <div class="progress-line">
+                                    <div class="progress-line-fill" th:style="'width: ' + 
+                                        (${order.status == 'PENDING'} ? '0%' : 
+                                        (${order.status == 'PROCESSING'} ? '33.3%' : 
+                                        (${order.status == 'SHIPPED'} ? '66.6%' : '100%')))"></div>
+                                </div>
+                                <div th:class="'step ' + (${order.status == 'PENDING' or order.status == 'PROCESSING' or order.status == 'SHIPPED' or order.status == 'COMPLETED' ? 'active' : ''})">
+                                    <div class="step-icon"><i class="fas fa-file-alt"></i></div> Đặt hàng
+                                </div>
+                                <div th:class="'step ' + (${order.status == 'PROCESSING' or order.status == 'SHIPPED' or order.status == 'COMPLETED' ? 'active' : ''})">
+                                    <div class="step-icon"><i class="fas fa-box"></i></div> Đóng gói
+                                </div>
+                                <div th:class="'step ' + (${order.status == 'SHIPPED' or order.status == 'COMPLETED' ? 'active' : ''})">
+                                    <div class="step-icon"><i class="fas fa-truck"></i></div> Vận chuyển
+                                </div>
+                                <div th:class="'step ' + (${order.status == 'COMPLETED' ? 'active' : ''})">
+                                    <div class="step-icon"><i class="fas fa-star"></i></div> Hoàn thành
+                                </div>
+                            </div>
+                            <div th:if="${order.status == 'CANCELLED'}" class="alert alert-danger text-center mb-0">
+                                <i class="fas fa-times-circle me-2"></i> Đơn hàng này đã bị hủy.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Sản phẩm</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-borderless mb-0">
+                                <tbody th:each="detail : ${order.orderDetails}">
+                                    <tr class="align-middle">
+                                        <td style="width: 80px;">
+                                            <img th:src="${detail.product.imageUrl}" class="img-fluid rounded" style="width: 60px; height: 80px; object-fit: cover;" onerror="this.src='/images/default.jpg'">
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold" th:text="${detail.product.name}"></div>
+                                            <div class="text-muted small" th:text="'Số lượng: x' + ${detail.quantity}"></div>
+                                        </td>
+                                        <td class="text-end">
+                                            <span class="fw-bold text-danger" th:text="${#numbers.formatDecimal(detail.priceAtPurchase, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer bg-white text-end py-3">
+                            <div class="mb-1">Tạm tính: <span th:text="${#numbers.formatDecimal(order.totalMoney, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></div>
+                            <div class="mb-1">Giảm giá: <span th:text="'-' + ${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></div>
+                            <div class="mb-1">Phí vận chuyển: <span th:text="'+' + ${#numbers.formatDecimal(order.shippingFee, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></div>
+                            <div class="h5 fw-bold text-danger mb-0">Tổng cộng: <span th:text="${#numbers.formatDecimal(order.finalTotal, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Thông tin nhận hàng</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-1 fw-bold" th:text="${order.shippingName}"></p>
+                            <p class="mb-1 text-muted" th:text="${order.shippingPhone}"></p>
+                            <p class="mb-3 text-muted" th:text="${order.shippingAddress}"></p>
+                            <hr>
+                            <p class="mb-1 small text-muted">Phương thức thanh toán</p>
+                            <p class="mb-3 fw-bold" th:text="${order.paymentMethod}"></p>
+                            <p class="mb-1 small text-muted">Trạng thái thanh toán</p>
+                            <p class="mb-0"><span th:class="'badge ' + (${order.paymentStatus == 'PAID' ? 'bg-success' : 'bg-warning text-dark'})" th:text="${order.paymentStatus}"></span></p>
+                        </div>
+                    </div>
+                    
+                    <div th:if="${order.orderNote}" class="card shadow-sm border-0">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Ghi chú</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0 text-muted" th:text="${order.orderNote}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <footer th:fragment="footer" class="footer">
+        <style>
+            .footer {
+                background-color: #fff;
+                border-top: 4px solid #1a1a2e;
+                padding-top: 50px;
+                margin-top: 50px;
+                color: #333;
+                font-size: 14px;
+            }
+
+            .footer-title {
+                font-size: 16px;
+                font-weight: 700;
+                text-transform: uppercase;
+                margin-bottom: 20px;
+                color: #1a1a2e;
+                position: relative;
+            }
+
+            .footer-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .footer-list li {
+                margin-bottom: 10px;
+            }
+
+            .footer-list a {
+                color: #555;
+                text-decoration: none;
+                transition: 0.2s;
+            }
+
+            .footer-list a:hover {
+                color: #c49b63;
+                padding-left: 5px;
+            }
+
+            .footer-contact i {
+                width: 20px;
+                color: #c49b63;
+                margin-right: 5px;
+            }
+
+            .social-icons a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 35px;
+                height: 35px;
+                border-radius: 50%;
+                background-color: #f0f0f0;
+                color: #555;
+                margin-right: 10px;
+                transition: 0.3s;
+                text-decoration: none;
+            }
+
+            .social-icons a:hover {
+                background-color: #1a1a2e;
+                color: #c49b63;
+                transform: translateY(-3px);
+            }
+
+            .payment-methods img {
+                height: 25px;
+                margin-right: 10px;
+                margin-bottom: 10px;
+                filter: grayscale(100%);
+                transition: 0.3s;
+                opacity: 0.7;
+            }
+
+            .payment-methods img:hover {
+                filter: grayscale(0%);
+                opacity: 1;
+            }
+
+            .newsletter-form .form-control {
+                border-radius: 20px 0 0 20px;
+                border: 1px solid #ddd;
+                font-size: 13px;
+            }
+
+            .newsletter-form .btn {
+                border-radius: 0 20px 20px 0;
+                background-color: #c49b63;
+                color: white;
+                font-weight: 600;
+                font-size: 13px;
+            }
+
+            .copyright {
+                background-color: #1a1a2e;
+                padding: 20px 0;
+                margin-top: 40px;
+                border-top: 1px solid #c49b63;
+                text-align: center;
+                color: #aaa;
+                font-size: 13px;
+            }
+        </style>
+        <div class="container">
+            <div class="row">
+                <!-- Cột 1: Giới thiệu -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="mb-3">
+                        <a th:href="@{/}" class="text-decoration-none">
+                            <span style="font-size: 24px; font-weight: 800; color: #1a1a2e;">BOOK<span style="color: #c49b63;">TOTAL</span></span>
+                        </a>
+                    </div>
+                    <p class="text-muted mb-4" style="line-height: 1.6;">
+                        BookTotal là nền tảng thương mại điện tử chuyên cung cấp sách chính hãng, văn phòng phẩm và quà tặng. 
+                        Chúng tôi cam kết mang tri thức đến mọi nhà.
+                    </p>
+                    <div class="social-icons mb-4">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-youtube"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                    </div>
+                </div>
+
+                <!-- Cột 2: Chính sách -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h4 class="footer-title">DỊCH VỤ</h4>
+                    <ul class="footer-list">
+                        <li><a th:href="@{/page/terms}">Điều khoản sử dụng</a></li>
+                        <li><a th:href="@{/page/privacy}">Chính sách bảo mật</a></li>
+                        <li><a th:href="@{/page/shipping-policy}">Chính sách vận chuyển</a></li>
+                        <li><a th:href="@{/page/return-policy}">Chính sách đổi trả</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 3: Hỗ trợ -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <h4 class="footer-title">HỖ TRỢ</h4>
+                    <ul class="footer-list">
+                        <li><a th:href="@{/page/faq}">Câu hỏi thường gặp</a></li>
+                        <li><a th:href="@{/page/about}">Giới thiệu BookTotal</a></li>
+                        <li><a href="#">Liên hệ chúng tôi</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 4: Liên hệ -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <h4 class="footer-title">LIÊN HỆ</h4>
+                    <ul class="footer-list footer-contact">
+                        <li><i class="fas fa-map-marker-alt"></i> Trường Đại học HUTECH, TP.HCM</li>
+                        <li><i class="fas fa-envelope"></i> booktotal01@gmail.com</li>
+                        <li><i class="fas fa-phone-alt"></i> 1900 636 467</li>
+                    </ul>
+                    <div class="mt-4 payment-methods">
+                        <img src="https://frontend.tikicdn.com/_desktop-frontend/static/img/footer/visa.svg" alt="Visa">
+                        <img src="https://frontend.tikicdn.com/_desktop-frontend/static/img/footer/mastercard.svg" alt="Mastercard">
+                        <img src="https://frontend.tikicdn.com/_desktop-frontend/static/img/footer/jcb.svg" alt="JCB">
+                        <img src="https://frontend.tikicdn.com/_desktop-frontend/static/img/footer/cash.svg" alt="Cash">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="copyright">
+            <div class="container">
+                <p class="mb-0">&copy; 2026 <b>BookTotal Corporation</b>. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

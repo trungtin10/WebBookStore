@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Sản Phẩm - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+        .table th { background-color: #f8f9fa; font-weight: 600; }
+        .product-img { width: 50px; height: 70px; object-fit: cover; border-radius: 4px; }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div th:replace="~{admin/partials/layout :: sidebar}"></div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-book me-2"></i> QUẢN LÝ SẢN PHẨM</h1>
+                    <div class="d-flex align-items-center">
+                        <a th:href="@{/admin/products/add}" class="btn btn-sm btn-warning fw-bold me-2">
+                            <i class="fas fa-plus me-1"></i> Thêm mới
+                        </a>
+                        <div th:replace="~{admin/partials/layout :: topbar}"></div>
+                    </div>
+                </div>
+
+                <!-- Alerts -->
+                <div th:if="${successMessage != null or param.success != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-1"></i> <span th:text="${successMessage ?: param.success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${errorMessage != null or param.error != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${errorMessage ?: param.error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="container pb-5">
+                    <!-- FILTER FORM -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form th:action="@{/admin/products}" method="GET" class="row g-3 align-items-center">
+                                <div class="col-md-4">
+                                    <input type="text" name="keyword" class="form-control"
+                                           placeholder="Tìm kiếm theo tên sản phẩm..." th:value="${keyword}">
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="categoryId" class="form-select">
+                                        <option value="">Tất cả danh mục</option>
+                                        <option th:each="c : ${categories}"
+                                                th:value="${c.id}" th:text="${c.name}"
+                                                th:selected="${categoryId != null and categoryId == c.id}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="status" class="form-select">
+                                        <option value="all"     th:selected="${status == null or status == 'all'}">Tất cả trạng thái</option>
+                                        <option value="visible" th:selected="${status == 'visible'}">Đang hiển thị</option>
+                                        <option value="hidden"  th:selected="${status == 'hidden'}">Đang ẩn</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-filter me-2"></i> Lọc
+                                    </button>
+                                    <a th:if="${keyword != null or categoryId != null or (status != null and status != 'all')}"
+                                       th:href="@{/admin/products}" class="btn btn-outline-secondary ms-2" title="Xóa bộ lọc">
+                                        <i class="fas fa-undo"></i>
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0 fw-bold">Danh sách sản phẩm</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th class="ps-3" style="width: 50px;">ID</th>
+                                            <th style="width: 60px;">Ảnh</th>
+                                            <th>Tên sản phẩm</th>
+                                            <th>Danh mục</th>
+                                            <th>Giá bán</th>
+                                            <th>Tồn kho</th>
+                                            <th>Đã bán</th>
+                                            <th class="pe-3">Hành động</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:if="${products == null or products.empty}">
+                                            <td colspan="8" class="text-center py-4 text-muted">Chưa có sản phẩm nào.</td>
+                                        </tr>
+                                        <tr th:each="p : ${products}">
+                                            <td class="ps-3">#<span th:text="${p.id}"></span></td>
+                                            <td>
+                                                <img th:src="@{${p.imageUrl != null ? (p.imageUrl.startsWith('http') or p.imageUrl.startsWith('/uploads/') ? p.imageUrl : '/uploads/' + p.imageUrl) : '/uploads/default.jpg'}}"
+                                                     class="product-img"
+                                                     onerror="this.src='/uploads/default.jpg'">
+                                            </td>
+                                            <td>
+                                                <h6 class="mb-0 fw-bold" th:text="${p.name}"></h6>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-light text-dark border"
+                                                      th:text="${p.category != null ? p.category.name : 'Chưa phân loại'}"></span>
+                                            </td>
+                                            <td class="fw-bold text-danger"
+                                                th:text="${#numbers.formatDecimal(p.price, 0, 'COMMA', 0, 'POINT')} + ' đ'"></td>
+                                            <td>
+                                                <span th:class="${p.quantity < 10 ? 'text-danger fw-bold' : 'text-success fw-bold'}"
+                                                      th:text="${p.quantity}"></span>
+                                            </td>
+                                            <td th:text="${p.soldCount != null ? p.soldCount : 0}"></td>
+                                            <td class="pe-3">
+                                                <!-- Xem chi tiết -->
+                                                <a th:href="@{'/product/' + ${p.id}}" target="_blank"
+                                                   class="btn btn-sm btn-info text-white me-1" title="Xem chi tiết">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <!-- Sửa -->
+                                                <a th:href="@{'/admin/products/edit/' + ${p.id}}"
+                                                   class="btn btn-sm btn-primary me-1" title="Sửa">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <!-- Xóa - dùng confirm modal -->
+                                                <button class="btn btn-sm btn-danger" title="Xóa"
+                                                        th:data-id="${p.id}"
+                                                        th:data-name="${p.name}"
+                                                        onclick="showDeleteModal(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    <nav th:if="${totalPages > 1}" class="mt-4" aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${currentPage == 0 ? 'disabled' : ''}">
+                                <a class="page-link"
+                                   th:href="@{/admin/products(page=${currentPage - 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status})}"
+                                   aria-label="Previous"><span>&laquo;</span></a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                                th:classappend="${i == currentPage ? 'active' : ''}">
+                                <a class="page-link"
+                                   th:href="@{/admin/products(page=${i}, keyword=${keyword}, categoryId=${categoryId}, status=${status})}"
+                                   th:text="${i + 1}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${currentPage == totalPages - 1 ? 'disabled' : ''}">
+                                <a class="page-link"
+                                   th:href="@{/admin/products(page=${currentPage + 1}, keyword=${keyword}, categoryId=${categoryId}, status=${status})}"
+                                   aria-label="Next"><span>&raquo;</span></a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Xác nhận xóa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Bạn có chắc chắn muốn xóa sản phẩm <strong id="deleteProductName"></strong>?
+                    <br><small class="text-muted">Hành động này không thể hoàn tác.</small>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <form id="deleteForm" method="post">
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showDeleteModal(btn) {
+            const id = btn.dataset.id;
+            const name = btn.dataset.name;
+            document.getElementById('deleteProductName').textContent = name;
+            document.getElementById('deleteForm').action = '/admin/products/delete/' + id;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+    </script>
+</body>
+
+</html>

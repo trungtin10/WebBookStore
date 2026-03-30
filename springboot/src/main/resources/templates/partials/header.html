@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:fragment="header" class="header-wrapper">
+    <style>
+        :root { --primary-color: #1a1a2e; --accent-color: #c49b63; --text-color: #333; }
+        .main-header { padding: 15px 0; border-bottom: 1px solid #eee; background: white; }
+        .header-content { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+        .brand-logo { font-size: 2rem; font-weight: 800; color: var(--primary-color); text-decoration: none; text-transform: uppercase; }
+        .search-container { flex-grow: 1; position: relative; max-width: 500px; }
+        .search-input { width: 100%; padding: 10px 45px 10px 20px; border: 2px solid #e0e0e0; border-radius: 50px; outline: none; }
+        .search-btn { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--primary-color); color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+        .header-actions { display: flex; align-items: center; gap: 25px; }
+        .action-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #555; font-size: 0.8rem; position: relative; cursor: pointer; padding-bottom: 5px; }
+        .action-item i { font-size: 1.4rem; margin-bottom: 3px; color: var(--primary-color); }
+        .cart-badge { position: absolute; top: -5px; right: -8px; background-color: #C92127; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 50%; font-weight: bold; border: 2px solid white; display: none; }
+        .nav-bar { background-color: var(--primary-color); color: white; position: sticky; top: 0; z-index: 1000; }
+        .nav-container { display: flex; align-items: center; }
+        .cat-menu-btn { background-color: var(--accent-color); color: white; padding: 12px 20px; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; cursor: pointer; position: relative; width: 260px; }
+        .cat-dropdown { display: none; position: absolute; top: 100%; left: 0; width: 100%; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 1001; }
+        .cat-menu-btn:hover .cat-dropdown { display: block; }
+        .cat-item { display: block; padding: 10px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0; }
+        .nav-links { display: flex; gap: 10px; margin-left: 20px; }
+        .nav-link-item { color: white; text-decoration: none; padding: 12px 15px; font-weight: 500; font-size: 0.9rem; }
+        .dropdown-menu-custom { display: none; position: absolute; top: 100%; right: 0; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border-radius: 8px; padding: 0; z-index: 1001; min-width: 220px; }
+        .action-item:hover .dropdown-menu-custom { display: block; }
+        .user-menu-link { display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #f5f5f5; font-size: 0.9rem; }
+        .user-menu-link:hover { background-color: #f8f9fa; color: var(--accent-color); }
+        .cart-dropdown { width: 350px; }
+        .cart-item-row { display: flex; padding: 10px 15px; border-bottom: 1px solid #f5f5f5; align-items: center; }
+        .cart-img { width: 50px; height: 70px; object-fit: cover; border-radius: 4px; margin-right: 10px; }
+        .cart-info { flex: 1; }
+        .cart-name { font-size: 0.85rem; font-weight: 600; color: #333; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .cart-price { font-size: 0.85rem; color: #C92127; font-weight: 700; }
+    </style>
+
+    <div class="main-header">
+        <div class="container header-content">
+            <a th:href="@{/}" class="brand-logo">BOOKTOTAL</a>
+            <form th:action="@{/products}" method="GET" class="search-container">
+                <input type="text" name="search" class="search-input" placeholder="Tìm kiếm sách..." required th:value="${param.search}">
+                <button type="submit" class="search-btn"><i class="fas fa-search"></i></button>
+            </form>
+            <div class="header-actions">
+                <a sec:authorize="hasRole('ADMIN')" th:href="@{/admin}" class="action-item">
+                    <i class="fas fa-user-shield"></i><span>Quản trị</span>
+                </a>
+
+                <!-- Notifications -->
+                <div class="action-item">
+                    <i class="far fa-bell"></i><span>Thông báo</span>
+                    <span id="notifBadge" class="cart-badge">0</span>
+                    <div class="dropdown-menu-custom p-3 text-center text-muted small" style="min-width: 250px;">
+                        <div sec:authorize="isAuthenticated()">
+                            Chưa có thông báo mới
+                        </div>
+                        <div sec:authorize="!isAuthenticated()">
+                            Vui lòng <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" class="text-danger fw-bold">đăng nhập</a> để xem thông báo
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cart -->
+                <div class="action-item">
+                    <a th:href="@{/cart}" class="text-decoration-none text-dark d-flex flex-column align-items-center">
+                        <i class="fas fa-shopping-bag"></i><span>Giỏ hàng</span>
+                        <span id="cartBadge" class="cart-badge">0</span>
+                    </a>
+                    <div class="dropdown-menu-custom cart-dropdown">
+                        <div id="cartDropdownList" class="cart-list">
+                            <div class="text-center py-4 text-muted small">Giỏ hàng trống</div>
+                        </div>
+                        <div class="p-3 border-top"><a th:href="@{/cart}" class="btn btn-danger btn-sm w-100 fw-bold">XEM GIỎ HÀNG</a></div>
+                    </div>
+                </div>
+
+                <!-- User -->
+                <div class="action-item">
+                    <i class="fas fa-user-circle"></i>
+                    <span sec:authorize="!isAuthenticated()">Tài khoản</span>
+                    <span sec:authorize="isAuthenticated()" sec:authentication="name"></span>
+                    <div class="dropdown-menu-custom user-dropdown">
+                        <div sec:authorize="isAuthenticated()">
+                            <a th:href="@{/profile}" class="user-menu-link"><i class="fas fa-user me-2"></i> Hồ sơ cá nhân</a>
+                            <a th:href="@{/orders}" class="user-menu-link"><i class="fas fa-history me-2"></i> Lịch sử mua hàng</a>
+                            <form th:action="@{/logout}" method="post" style="margin:0;">
+                                <button type="submit" class="user-menu-link text-danger w-100 text-start border-0 bg-transparent"><i class="fas fa-sign-out-alt me-2"></i> Đăng xuất</button>
+                            </form>
+                        </div>
+                        <div sec:authorize="!isAuthenticated()">
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" class="user-menu-link">Đăng nhập</a>
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#registerModal" class="user-menu-link">Đăng ký</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="container nav-container">
+            <div class="cat-menu-btn"><i class="fas fa-bars me-2"></i> Danh mục sản phẩm
+                <div class="cat-dropdown">
+                    <a th:each="cat : ${categories}" th:href="@{/products(categoryId=${cat.id})}" class="cat-item" th:text="${cat.name}"></a>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a th:href="@{/}" class="nav-link-item">Trang chủ</a>
+                <a th:href="@{/products}" class="nav-link-item">Tất cả sản phẩm</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshCartDropdownHeader() {
+            fetch('/cart/summary')
+                .then(r => r.json())
+                .then(data => {
+                    const badge = document.getElementById('cartBadge');
+                    if (badge) {
+                        badge.textContent = data.totalQty;
+                        badge.style.display = data.totalQty > 0 ? 'inline-block' : 'none';
+                    }
+                    const list = document.getElementById('cartDropdownList');
+                    if (list) {
+                        if (!data.items || data.items.length === 0) {
+                            list.innerHTML = '<div class="text-center py-4 text-muted small">Giỏ hàng trống</div>';
+                        } else {
+                            list.innerHTML = data.items.slice(0, 5).map(item => `
+                                <div class="cart-item-row">
+                                    <img src="${item.imageUrl ? (item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/uploads/') ? item.imageUrl : '/uploads/' + item.imageUrl) : '/uploads/default.jpg'}" class="cart-img" onerror="this.src='/uploads/default.jpg'">
+                                    <div class="cart-info">
+                                        <div class="cart-name">${item.name}</div>
+                                        <div class="d-flex justify-content-between mt-1">
+                                            <span class="small text-muted">x${item.quantity}</span>
+                                            <span class="cart-price">${item.price.toLocaleString('vi-VN')}đ</span>
+                                        </div>
+                                    </div>
+                                </div>`).join('');
+                        }
+                    }
+                });
+        }
+        document.addEventListener('DOMContentLoaded', refreshCartDropdownHeader);
+    </script>
+</div>
+</body>
+</html>

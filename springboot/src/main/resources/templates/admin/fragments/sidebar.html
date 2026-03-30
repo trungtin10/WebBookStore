@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+    <div th:fragment="adminSidebar(activePage)" class="col-md-3 col-lg-2 d-md-block sidebar collapse p-0">
+        <style>
+            .sidebar { min-height: 100vh; background-color: #1a1a2e; padding-top: 20px; position: fixed; left: 0; top: 0; z-index: 1000; }
+            .sidebar .nav-link { color: rgba(255,255,255,.75); padding: 12px 20px; transition: 0.2s; border-left: 4px solid transparent; }
+            .sidebar .nav-link:hover { color: #fff; background-color: rgba(255,255,255,.1); }
+            .sidebar .nav-link.active { color: #c49b63; background-color: rgba(196, 155, 99,.1); border-left: 4px solid #c49b63; font-weight: 600; }
+            main { margin-left: 16.666667%; } /* Đẩy nội dung chính sang phải để không bị Sidebar đè lên */
+        </style>
+        <div class="text-center mb-4 px-3">
+            <h4 class="text-white fw-bold">BOOK<span style="color:#c49b63;">TOTAL</span> ADMIN</h4>
+            <hr class="text-secondary">
+        </div>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a th:href="@{/admin}" class="nav-link" th:classappend="${activePage == 'dashboard' ? 'active' : ''}">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/products}" class="nav-link" th:classappend="${activePage == 'products' ? 'active' : ''}">
+                    <i class="fas fa-book me-2"></i> Sản phẩm
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/categories}" class="nav-link" th:classappend="${activePage == 'categories' ? 'active' : ''}">
+                    <i class="fas fa-list me-2"></i> Danh mục
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/orders}" class="nav-link" th:classappend="${activePage == 'orders' ? 'active' : ''}">
+                    <i class="fas fa-shopping-cart me-2"></i> Đơn hàng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/user}" class="nav-link" th:classappend="${activePage == 'users' ? 'active' : ''}">
+                    <i class="fas fa-users me-2"></i> Người dùng
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/stats}" class="nav-link" th:classappend="${activePage == 'stats' ? 'active' : ''}">
+                    <i class="fas fa-chart-bar me-2"></i> Thống kê
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <a th:href="@{/}" class="nav-link text-warning">
+                    <i class="fas fa-arrow-left me-2"></i> Quay lại Shop
+                </a>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>

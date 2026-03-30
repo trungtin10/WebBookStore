@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Quản Lý Danh Mục | Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div th:replace="~{admin/partials/layout :: sidebar}"></div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2"><i class="fas fa-list me-2"></i> QUẢN LÝ DANH MỤC</h1>
+                    <div class="d-flex align-items-center">
+                        <a th:href="@{/admin/categories/add}" class="btn btn-sm btn-warning fw-bold me-2"><i
+                                class="fas fa-plus me-1"></i> Thêm mới</a>
+                        <div th:replace="~{admin/partials/layout :: topbar}"></div>
+                    </div>
+                </div>
+
+                <div th:if="${successMessage != null or param.success != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-1"></i> <span th:text="${successMessage ?: param.success}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                <div th:if="${errorMessage != null or param.error != null}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle me-1"></i> <span th:text="${errorMessage ?: param.error}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <div class="container pb-5">
+                    <!-- FILTER FORM -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form th:action="@{/admin/categories}" method="GET" class="row g-3 align-items-center">
+                                <div class="col-md-6">
+                                    <input type="text" name="keyword" class="form-control"
+                                        placeholder="Tìm kiếm tên danh mục..." th:value="${param.keyword}">
+                                </div>
+                                <div class="col-md-4 d-flex">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-2"></i>
+                                        Lọc</button>
+                                    <a th:if="${param.keyword != null and !param.keyword[0].isEmpty()}"
+                                        th:href="@{/admin/categories}" class="btn btn-outline-secondary ms-2"
+                                        title="Xóa bộ lọc"><i class="fas fa-undo"></i></a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-3">ID</th>
+                                        <th>Tên danh mục</th>
+                                        <th class="pe-3">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:if="${categories == null or categories.empty}">
+                                        <td colspan="3" class="text-center py-4 text-muted">Chưa có danh mục nào.</td>
+                                    </tr>
+                                    <tr th:each="c : ${categories}">
+                                        <td class="ps-3" th:text="'#' + ${c.id}"></td>
+                                        <td class="fw-bold" th:text="${c.name}"></td>
+                                        <td class="pe-3">
+                                            <a th:href="@{'/admin/categories/edit/' + ${c.id}}"
+                                                class="btn btn-sm btn-primary me-1" title="Sửa"><i
+                                                    class="fas fa-edit"></i></a>
+                                            <!-- Delete Button -->
+                                            <form th:action="@{'/admin/categories/delete/' + ${c.id}}" method="post"
+                                                class="d-inline-block">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Xóa"
+                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa danh mục này? Lưu ý: Không thể xóa nếu có sản phẩm thuộc danh mục này.');">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

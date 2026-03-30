@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Danh sách đơn hàng | BookTotal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .order-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-body {
+            padding: 20px;
+        }
+
+        .order-footer {
+            padding: 15px 20px;
+            background-color: #fff;
+            border-top: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-processing {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+
+        .status-shipped {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-delivered {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .order-id {
+            font-weight: 700;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .order-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .product-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .product-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .product-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .product-img {
+            width: 60px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #eee;
+            margin-right: 15px;
+        }
+
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-meta {
+            font-size: 0.85rem;
+            color: #777;
+        }
+
+        .order-total-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .order-total-value {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #C92127;
+        }
+
+        .btn-action {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-view-details {
+            background-color: #fff;
+            border: 1px solid #C92127;
+            color: #C92127;
+        }
+
+        .btn-view-details:hover {
+            background-color: #C92127;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{partials/header :: header}"></div>
+
+    <div class="container mt-4 mb-5">
+        <h2 class="mb-4 fw-bold">Đơn hàng của tôi</h2>
+
+        <div th:if="${orders == null or orders.empty}" class="text-center py-5 bg-white rounded shadow-sm">
+            <i class="fas fa-box-open fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted mb-3">Chưa có đơn hàng nào</h4>
+            <p class="mb-4">Bạn chưa thực hiện giao dịch nào trên BookTotal.</p>
+            <a th:href="@{/products}" class="btn btn-primary px-4 py-2"
+                style="background-color: #C92127; border:none;">Tiếp tục mua sắm</a>
+        </div>
+
+        <div th:if="${orders != null and !orders.empty}">
+            <div th:each="order : ${orders}" class="order-card">
+                <div class="order-header">
+                    <div>
+                        <div class="order-id" th:text="'Mã đơn: #' + ${order.id}"></div>
+                        <div class="order-date" th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}">
+                        </div>
+                    </div>
+                    <div>
+                        <span th:if="${order.status == 'pending'}" class="status-badge status-pending">Chờ xác
+                            nhận</span>
+                        <span th:if="${order.status == 'processing'}" class="status-badge status-processing">Đang xử
+                            lý</span>
+                        <span th:if="${order.status == 'shipped'}" class="status-badge status-shipped">Đang giao
+                            hàng</span>
+                        <span th:if="${order.status == 'delivered'}" class="status-badge status-delivered">Đã
+                            giao</span>
+                        <span th:if="${order.status == 'cancelled'}" class="status-badge status-cancelled">Đã hủy</span>
+                    </div>
+                </div>
+
+                <div class="order-body">
+                    <ul class="product-list">
+                        <!-- Chỉ hiển thị 2 sản phẩm đầu -->
+                        <li th:each="detail, iterStat : ${order.orderDetails}" th:if="${iterStat.index < 2}"
+                            class="product-item">
+                            <img th:src="${detail.product.imageUrl != null ? detail.product.imageUrl : '/images/default.jpg'}"
+                                class="product-img" onerror="this.src='/images/default.jpg'">
+                            <div>
+                                <div class="product-name" th:text="${detail.product.name}"></div>
+                                <div class="product-meta">
+                                    <span th:text="'SL: x' + ${detail.quantity}"></span> |
+                                    <span class="text-danger fw-bold"
+                                        th:text="${#numbers.formatDecimal(detail.priceAtPurchase, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                    <div th:if="${order.orderDetails.size() > 2}"
+                        class="text-center mt-3 pt-3 border-top text-muted small">
+                        <i class="fas fa-ellipsis-h px-2"></i> Xem thêm <span
+                            th:text="${order.orderDetails.size() - 2}"></span> sản phẩm khác <i
+                            class="fas fa-ellipsis-h px-2"></i>
+                    </div>
+                </div>
+
+                <div class="order-footer">
+                    <div>
+                        <span class="order-total-label">Thành tiền:</span>
+                        <span class="order-total-value"
+                            th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                    </div>
+                    <div>
+                        <a th:href="@{'/orders/' + ${order.id}}" class="btn btn-action btn-view-details">Xem Chi
+                            Tiết</a>
+
+                        <form th:if="${order.status == 'pending'}" th:action="@{'/orders/' + ${order.id} + '/cancel'}"
+                            method="post" class="d-inline-block ms-2">
+                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">Hủy đơn</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:replace="~{partials/footer :: footer}"></div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f387cbf1-c135-43ac-8267-2ee2d05ed26a" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Web.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plaintext" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cookies.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/err.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/fix-encoding.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/main.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/product-detail.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770366931633-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770451015985-OIP (2).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770451069156-laoptp.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770451075631-OIP (2).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770475504026-laoptp.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770480691835-OIP (2).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770480945031-laoptp.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770481120951-OIP (2).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770481194811-logocoffe.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770481405547-laoptp.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770657644878-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770658457160-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770658806748-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770659327380-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770747930838-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1770749397136-14774-doraemon-mau-1.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772546767953-OIP (1).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772548019212-OIP.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772548320514-OIP (2).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772548402269-716b044e9580b7bb939e7a0b658fd087.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772549131926-OIP (3).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772549397388-sg-11134201-22100-g0f22rjztoiv39.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772549498144-vn-11134207-7qukw-ljw72yd38o1g31.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/1772549709239-OIP (4).jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/99d8cf318a314224d1211a7e4f83f4dc.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/images/qrck.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/js/product-detail.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config/default.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config/keys.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/AuthController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/CartController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/OrderController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/PageController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/ProductController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/AdminCategoryController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/AdminInventoryController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/AdminOrderController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/AdminProductController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/AdminReviewController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/AdminUserController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/admin/adminController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/api/ApiAuthController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/api/ApiCouponController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/api/ApiOrderController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/api/ApiProductController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/controllers/api/ApiUserController.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/middleware/auth.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/middleware/verifyJwt.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/Category.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/Coupon.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/Notification.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/Order.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/Product.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/User.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin/category.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin/inventory.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin/order.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin/product.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin/review.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/admin/user.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/api.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/AuthService.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/OrderService.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/ProductService.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/ApiResponse.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/mailer.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/order_automation.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/shipment_api.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/validators/AuthValidator.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/categories/category_add.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/categories/category_edit.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/categories/category_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/change_password.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/index.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/inventory_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/order_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/partials/account_dropdown.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/partials/confirm_modal.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/partials/menu.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/product_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/products/product_add.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/products/product_detail.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/products/product_edit.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/products/product_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/profile.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/review/review_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/review_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/starts/stats.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/stats.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/user/add.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/user/edit.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/admin/user/user_list.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/auth/forgot_password.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/auth/login.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/auth/register.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/auth/reset_password.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/cart.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/checkout.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/home.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/layout.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/notifications.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/order_history.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/order_success.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/page.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/partials/footer.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/partials/menu.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/payment_gateway.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/product.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/product_detail.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/views/profile.ejs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_api.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_db.js" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="3AWHgbBc0LnQkZi8zY7VI8LkBmX" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.SpringbootBackendApplication.executor": "Run",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/Công Nghệ Thông Tin/BookStoreSpB",
+    "settings.editor.selected.configurable": "preferences.lookFeel"
+  }
+}]]></component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="BookStoreSpB" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="BookStoreSpB" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+    <configuration name="SpringbootBackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" temporary="true" nameIsGenerated="true">
+      <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
+      <module name="springboot-backend" />
+      <option name="SPRING_BOOT_MAIN_CLASS" value="com.bookstore.SpringbootBackendApplication" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.bookstore.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Spring Boot.SpringbootBackendApplication" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="f387cbf1-c135-43ac-8267-2ee2d05ed26a" name="Changes" comment="" />
+      <created>1772701519812</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1772701519812</updated>
+    </task>
+    <servers />
+  </component>
+</project>
